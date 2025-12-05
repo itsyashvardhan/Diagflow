@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Workflow, Github, ArrowRight, Sparkles, Zap, Shield } from "lucide-react";
+import { Workflow, ArrowRight, Sparkles, Zap, Shield } from "lucide-react";
 
 const LandingPage = () => {
   return (
@@ -33,33 +33,10 @@ const LandingPage = () => {
             >
               How It Works
             </a>
-            <a
-              href="https://github.com/PythonicBoat/Diagflow"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <Github className="w-4 h-4" />
-              GitHub
-            </a>
+
           </nav>
 
           <div className="flex items-center gap-3">
-            <Button
-              asChild
-              variant="ghost"
-              className="hidden sm:flex text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            >
-              <a
-                href="https://github.com/PythonicBoat/Diagflow"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Github className="w-4 h-4" />
-                <span className="hidden md:inline">Star on GitHub</span>
-              </a>
-            </Button>
             <Button
               asChild
               className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25 border-0"
@@ -399,34 +376,15 @@ const LandingPage = () => {
                 </span>
               </div>
 
-              <div className="flex items-center gap-6 text-sm text-gray-600">
-                <a
-                  href="https://github.com/PythonicBoat/Diagflow"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-gray-900 transition-colors"
-                >
-                  GitHub
-                </a>
-                <a
-                  href="https://twitter.com/_yashvs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-gray-900 transition-colors"
-                >
-                  Twitter
-                </a>
-              </div>
-
               <p className="text-sm text-gray-500">
                 Built with ❤️ by{" "}
                 <a
-                  href="https://twitter.com/_yashvs"
+                  href="https://github.com/PythonicBoat"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-orange-600 hover:text-orange-700"
                 >
-                  @_yashvs
+                  @PythonicBoat
                 </a>
               </p>
             </div>
