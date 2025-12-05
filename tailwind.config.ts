@@ -62,6 +62,12 @@ export default {
           'Arial',
           'sans-serif',
         ],
+        serif: [
+          '"Playfair Display"',
+          '"Georgia"',
+          '"Times New Roman"',
+          'serif',
+        ],
       },
       borderRadius: {
         lg: "var(--radius)",
