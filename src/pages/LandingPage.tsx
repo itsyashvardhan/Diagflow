@@ -76,62 +76,134 @@ const LandingPage = () => {
       {/* Hero Section */}
       <main className="relative">
         <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center px-6 py-20 lg:py-32">
-          {/* Floating Diagrams */}
-          <div className="absolute inset-0 overflow-hidden">
-            {/* Top Left Diagram */}
-            <div 
-              className="absolute top-16 left-8 lg:left-[8%] w-48 lg:w-64 transform -rotate-6 opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-500"
-              style={{ animation: 'float 8s ease-in-out infinite' }}
-            >
-              <div className="bg-white rounded-2xl shadow-2xl shadow-gray-200/50 p-3 border border-gray-100">
-                <img 
-                  src="/diagram-1.png" 
-                  alt="System architecture diagram" 
-                  className="w-full h-auto rounded-lg"
-                />
-              </div>
-            </div>
 
-            {/* Top Right Diagram */}
-            <div 
-              className="absolute top-24 right-8 lg:right-[8%] w-52 lg:w-72 transform rotate-6 opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-500"
-              style={{ animation: 'float 7s ease-in-out infinite', animationDelay: '1s' }}
+          {/* Decorative Flow Lines - Desktop Only */}
+          <div className="hidden lg:block absolute inset-0 overflow-hidden pointer-events-none">
+            {/* Left Side - Flowing diagram lines */}
+            <svg
+              className="absolute left-0 top-0 h-full w-1/3 opacity-60"
+              viewBox="0 0 400 800"
+              preserveAspectRatio="xMinYMid slice"
             >
-              <div className="bg-white rounded-2xl shadow-2xl shadow-gray-200/50 p-3 border border-gray-100">
-                <img 
-                  src="/diagram-2.png" 
-                  alt="Entity relationship diagram" 
-                  className="w-full h-auto rounded-lg"
-                />
-              </div>
-            </div>
+              {/* Vertical connector lines between nodes */}
+              <path
+                d="M110 175 Q110 220 140 260 Q175 290 175 320"
+                fill="none"
+                stroke="url(#gradient-left)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="animate-flow-line"
+              />
+              <path
+                d="M175 360 Q175 400 140 430 Q100 455 100 475"
+                fill="none"
+                stroke="url(#gradient-left)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="animate-flow-line-delayed"
+              />
+              <path
+                d="M100 525 Q100 560 100 590 L100 620"
+                fill="none"
+                stroke="url(#gradient-left)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="animate-flow-line-slow"
+              />
 
-            {/* Bottom Left Diagram */}
-            <div 
-              className="absolute bottom-24 left-12 lg:left-[12%] w-44 lg:w-56 transform rotate-3 opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-500"
-              style={{ animation: 'float 9s ease-in-out infinite', animationDelay: '2s' }}
-            >
-              <div className="bg-white rounded-2xl shadow-2xl shadow-gray-200/50 p-3 border border-gray-100">
-                <img 
-                  src="/diagram-3.png" 
-                  alt="Mind map diagram" 
-                  className="w-full h-auto rounded-lg"
-                />
-              </div>
-            </div>
+              {/* Diagram Nodes */}
+              <g className="animate-pulse-slow">
+                <rect x="80" y="140" width="60" height="35" rx="6" fill="#fff7ed" stroke="#ea580c" strokeWidth="2" opacity="0.9" />
+                <rect x="140" y="320" width="70" height="40" rx="8" fill="#fff7ed" stroke="#ea580c" strokeWidth="2" opacity="0.85" />
+                <circle cx="100" cy="500" r="25" fill="#fff7ed" stroke="#ea580c" strokeWidth="2" opacity="0.8" />
+                <rect x="60" y="620" width="80" height="45" rx="6" fill="#fff7ed" stroke="#ea580c" strokeWidth="2" opacity="0.85" />
+              </g>
 
-            {/* Bottom Right Diagram */}
-            <div 
-              className="absolute bottom-32 right-12 lg:right-[10%] w-48 lg:w-64 transform -rotate-8 opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-500"
-              style={{ animation: 'float 6s ease-in-out infinite', animationDelay: '3s' }}
+              {/* Connection dots at connection points */}
+              <g className="animate-pulse-dots">
+                <circle cx="110" cy="175" r="4" fill="#ea580c" opacity="0.9" />
+                <circle cx="175" cy="320" r="4" fill="#ea580c" opacity="0.85" />
+                <circle cx="175" cy="360" r="4" fill="#ea580c" opacity="0.85" />
+                <circle cx="100" cy="475" r="4" fill="#ea580c" opacity="0.8" />
+                <circle cx="100" cy="525" r="4" fill="#ea580c" opacity="0.8" />
+                <circle cx="100" cy="620" r="4" fill="#ea580c" opacity="0.85" />
+              </g>
+
+              <defs>
+                <linearGradient id="gradient-left" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#ea580c" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#fb923c" stopOpacity="0.5" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            {/* Right Side - Flowing diagram lines (mirrored) */}
+            <svg
+              className="absolute right-0 top-0 h-full w-1/3 opacity-60"
+              viewBox="0 0 400 800"
+              preserveAspectRatio="xMaxYMid slice"
+              style={{ transform: 'scaleX(-1)' }}
             >
-              <div className="bg-white rounded-2xl shadow-2xl shadow-gray-200/50 p-3 border border-gray-100">
-                <img 
-                  src="/diagram-4.png" 
-                  alt="Sequence diagram" 
-                  className="w-full h-auto rounded-lg"
-                />
-              </div>
+              {/* Vertical connector lines between nodes */}
+              <path
+                d="M150 180 Q150 220 151 250 Q152 270 152 280"
+                fill="none"
+                stroke="url(#gradient-right)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="animate-flow-line"
+              />
+              <path
+                d="M152 318 Q152 370 168 410 Q188 440 188 451"
+                fill="none"
+                stroke="url(#gradient-right)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="animate-flow-line-delayed"
+              />
+              <path
+                d="M188 505 Q188 540 155 560 Q118 575 118 580"
+                fill="none"
+                stroke="url(#gradient-right)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="animate-flow-line-slow"
+              />
+
+              {/* Diagram Nodes - Diamond and rectangles */}
+              <g className="animate-pulse-slow">
+                <polygon points="150,120 180,150 150,180 120,150" fill="#fff7ed" stroke="#ea580c" strokeWidth="2" opacity="0.85" />
+                <rect x="120" y="280" width="65" height="38" rx="6" fill="#fff7ed" stroke="#ea580c" strokeWidth="2" opacity="0.9" />
+                <circle cx="188" cy="478" r="27" fill="#fff7ed" stroke="#ea580c" strokeWidth="2" opacity="0.8" />
+                <rect x="80" y="580" width="75" height="42" rx="8" fill="#fff7ed" stroke="#ea580c" strokeWidth="2" opacity="0.85" />
+              </g>
+
+              {/* Connection dots at connection points */}
+              <g className="animate-pulse-dots">
+                <circle cx="150" cy="180" r="4" fill="#ea580c" opacity="0.85" />
+                <circle cx="152" cy="280" r="4" fill="#ea580c" opacity="0.9" />
+                <circle cx="152" cy="318" r="4" fill="#ea580c" opacity="0.9" />
+                <circle cx="188" cy="451" r="4" fill="#ea580c" opacity="0.8" />
+                <circle cx="188" cy="505" r="4" fill="#ea580c" opacity="0.8" />
+                <circle cx="118" cy="580" r="4" fill="#ea580c" opacity="0.85" />
+              </g>
+
+              <defs>
+                <linearGradient id="gradient-right" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#ea580c" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#fb923c" stopOpacity="0.5" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            {/* Floating particles/dots */}
+            <div className="absolute inset-0">
+              <div className="absolute left-[10%] top-[20%] w-3 h-3 bg-orange-500/60 rounded-full animate-float-particle" />
+              <div className="absolute left-[15%] top-[45%] w-2.5 h-2.5 bg-orange-600/50 rounded-full animate-float-particle-delayed" />
+              <div className="absolute left-[8%] top-[70%] w-3.5 h-3.5 bg-orange-500/45 rounded-full animate-float-particle-slow" />
+              <div className="absolute right-[12%] top-[25%] w-3 h-3 bg-orange-500/55 rounded-full animate-float-particle-delayed" />
+              <div className="absolute right-[18%] top-[55%] w-2.5 h-2.5 bg-orange-600/60 rounded-full animate-float-particle" />
+              <div className="absolute right-[10%] top-[75%] w-3 h-3 bg-orange-500/50 rounded-full animate-float-particle-slow" />
             </div>
           </div>
 
@@ -364,11 +436,6 @@ const LandingPage = () => {
 
       {/* CSS for animations */}
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
@@ -376,6 +443,72 @@ const LandingPage = () => {
         
         .animate-fade-in {
           animation: fade-in 0.6s ease-out;
+        }
+
+        /* Flow line animations */
+        @keyframes flow-line {
+          0% { stroke-dashoffset: 1000; opacity: 0; }
+          10% { opacity: 0.6; }
+          90% { opacity: 0.6; }
+          100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+
+        .animate-flow-line {
+          stroke-dasharray: 1000;
+          animation: flow-line 8s ease-in-out infinite;
+        }
+
+        .animate-flow-line-delayed {
+          stroke-dasharray: 1000;
+          animation: flow-line 10s ease-in-out infinite;
+          animation-delay: 2s;
+        }
+
+        .animate-flow-line-slow {
+          stroke-dasharray: 1000;
+          animation: flow-line 12s ease-in-out infinite;
+          animation-delay: 4s;
+        }
+
+        /* Pulse animations for nodes */
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.02); }
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dots {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.9; }
+        }
+
+        .animate-pulse-dots {
+          animation: pulse-dots 2s ease-in-out infinite;
+        }
+
+        /* Floating particle animations */
+        @keyframes float-particle {
+          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+          25% { transform: translateY(-10px) translateX(5px); opacity: 0.5; }
+          50% { transform: translateY(-5px) translateX(-3px); opacity: 0.4; }
+          75% { transform: translateY(-15px) translateX(2px); opacity: 0.6; }
+        }
+
+        .animate-float-particle {
+          animation: float-particle 6s ease-in-out infinite;
+        }
+
+        .animate-float-particle-delayed {
+          animation: float-particle 8s ease-in-out infinite;
+          animation-delay: 1s;
+        }
+
+        .animate-float-particle-slow {
+          animation: float-particle 10s ease-in-out infinite;
+          animation-delay: 3s;
         }
       `}</style>
     </div>
