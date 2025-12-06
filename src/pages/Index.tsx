@@ -25,8 +25,6 @@ import {
   Maximize2,
   Minimize2,
   Workflow,
-  Moon,
-  Sun,
   RotateCcw,
 } from "lucide-react";
 import { Github } from "lucide-react";
@@ -48,7 +46,6 @@ const Index = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Chat column sizing (resizable, max 40% of viewport)
   const MIN_CHAT_WIDTH = 280; // px
@@ -82,7 +79,7 @@ const Index = () => {
     latestWidthRef.current = chatWidth;
     try {
       localStorage.setItem("diagflow:chatWidth", String(chatWidth));
-    } catch {}
+    } catch { }
   }, [chatWidth]);
 
   useEffect(() => {
@@ -160,13 +157,9 @@ const Index = () => {
     setDiagramHistory(savedHistory);
     setHistoryIndex(savedIndex);
 
-    // Apply dark mode class
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    // Always dark mode
+    document.documentElement.classList.add('dark');
+  }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -260,11 +253,10 @@ const Index = () => {
 
       const assistantMessage: Message = {
         role: "assistant",
-        content: `${response.explanation}\n\n${
-          response.suggestions.length > 0
+        content: `${response.explanation}\n\n${response.suggestions.length > 0
             ? "**Suggestions:**\n" + response.suggestions.map((s) => `• ${s}`).join("\n")
             : ""
-        }`,
+          }`,
         timestamp: Date.now(),
       };
 
@@ -286,8 +278,8 @@ const Index = () => {
         storage.saveHistoryIndex(newHistory.length - 1);
       }
 
-  storage.saveCurrentDiagram(response.code);
-  storage.saveChatHistory(finalHistory);
+      storage.saveCurrentDiagram(response.code);
+      storage.saveChatHistory(finalHistory);
 
       toast({
         title: "Diagram Generated",
@@ -319,7 +311,7 @@ const Index = () => {
   const handleApplyCode = (code: string) => {
     setCurrentDiagram(code);
     storage.saveCurrentDiagram(code);
-    
+
     if (settings.autoSave) {
       const newEntry: DiagramHistoryEntry = {
         code,
@@ -396,10 +388,6 @@ const Index = () => {
       document.exitFullscreen();
       setIsFullscreen(false);
     }
-  };
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
   };
 
   // Rotating text helper for the welcome panel
@@ -492,20 +480,6 @@ const Index = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={toggleTheme}
-              className="glass-panel"
-              title="Toggle Theme"
-            >
-              {isDarkMode ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
               onClick={toggleFullscreen}
               className="glass-panel"
               title="Toggle Fullscreen"
@@ -557,13 +531,13 @@ const Index = () => {
                     <span className="font-medium">Ask Archie to</span>
                     <span className="ml-2">
                       <RotatingText
-                      phrases={[
-                        "design your system",
-                        "create flowcharts",
-                        "produce illustrations",
-                        "generate architecture diagrams",
-                        "explain data flows",
-                      ]}
+                        phrases={[
+                          "design your system",
+                          "create flowcharts",
+                          "produce illustrations",
+                          "generate architecture diagrams",
+                          "explain data flows",
+                        ]}
                       />
                     </span>
                   </div>

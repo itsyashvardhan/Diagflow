@@ -1,7 +1,7 @@
-import { useState, useRef, KeyboardEvent, ClipboardEvent, ChangeEvent } from "react";
+import { useState, useRef, KeyboardEvent, ClipboardEvent, ChangeEvent, DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Paperclip, Send, Sparkles, X } from "lucide-react";
+import { Paperclip, Send, Sparkles, X, Upload } from "lucide-react";
 import { Attachment } from "@/types/diagflow";
 import { useToast } from "@/hooks/use-toast";
 import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
@@ -25,6 +25,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -168,8 +169,71 @@ export function ChatInput({
     setAttachments((prev) => prev.filter((att) => att.id !== id));
   };
 
+  // Drag and Drop handlers
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (GEMINI_SUPPORTS_IMAGE_INPUT && !disabled) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    if (!GEMINI_SUPPORTS_IMAGE_INPUT) {
+      toast({
+        title: "Image attachments unavailable",
+        description: "Current Gemini model does not accept images.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { files } = e.dataTransfer;
+    if (files && files.length > 0) {
+      // Filter for image files only
+      const imageFiles = Array.from(files).filter((file) =>
+        file.type.startsWith("image/")
+      );
+      if (imageFiles.length > 0) {
+        processFiles(imageFiles, "upload");
+      } else {
+        toast({
+          title: "No images found",
+          description: "Please drop PNG or JPG images.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   return (
-    <div className="glass-panel p-4 space-y-3">
+    <div
+      className={`glass-panel p-4 space-y-3 relative transition-all duration-200 ${isDragOver ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
+        }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drag overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 bg-primary/10 backdrop-blur-sm rounded-lg z-10 flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-2 text-primary">
+            <Upload className="w-8 h-8 animate-bounce" />
+            <span className="font-medium">Drop images here</span>
+          </div>
+        </div>
+      )}
+
       <Textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
@@ -231,7 +295,7 @@ export function ChatInput({
             }
             fileInputRef.current?.click();
           }}
-          title={GEMINI_SUPPORTS_IMAGE_INPUT ? "Attach image" : "Model does not support images"}
+          title={GEMINI_SUPPORTS_IMAGE_INPUT ? "Attach image (or drag & drop)" : "Model does not support images"}
         >
           <Paperclip className="w-4 h-4 mr-2" />
           Attach
@@ -266,6 +330,9 @@ export function ChatInput({
 
       <p className="text-xs text-muted-foreground">
         Press <kbd className="px-2 py-0.5 bg-muted rounded text-xs">⌘ + Enter</kbd> to send
+        {GEMINI_SUPPORTS_IMAGE_INPUT && (
+          <span className="ml-2">• Drag & drop or paste images</span>
+        )}
       </p>
     </div>
   );

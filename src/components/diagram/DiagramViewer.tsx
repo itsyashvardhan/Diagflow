@@ -140,8 +140,35 @@ function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom 
       )}
 
       {!error && isLoading && code && (
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-6 animate-pulse">
+          {/* Skeleton diagram structure */}
+          <div className="flex flex-col items-center gap-4">
+            {/* Top node */}
+            <div className="w-32 h-12 bg-muted/40 rounded-lg border border-border/30" />
+
+            {/* Connector line */}
+            <div className="w-0.5 h-6 bg-muted/40" />
+
+            {/* Middle row */}
+            <div className="flex items-center gap-8">
+              <div className="w-28 h-10 bg-muted/30 rounded-lg border border-border/20" />
+              <div className="w-28 h-10 bg-muted/30 rounded-lg border border-border/20" />
+            </div>
+
+            {/* Connector lines */}
+            <div className="flex items-center gap-16">
+              <div className="w-0.5 h-6 bg-muted/40" />
+              <div className="w-0.5 h-6 bg-muted/40" />
+            </div>
+
+            {/* Bottom row */}
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-10 bg-muted/20 rounded-lg border border-border/15" />
+              <div className="w-24 h-10 bg-muted/20 rounded-lg border border-border/15" />
+              <div className="w-24 h-10 bg-muted/20 rounded-lg border border-border/15" />
+            </div>
+          </div>
+
           <p className="text-sm text-muted-foreground">Rendering diagram...</p>
         </div>
       )}
