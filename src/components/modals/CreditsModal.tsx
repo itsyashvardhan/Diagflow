@@ -27,12 +27,12 @@ export function CreditsModal({ open, onOpenChange }: CreditsModalProps) {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Diagflow was built by @pythonicboat. Find more projects and contributions on GitHub.
+            Diagflow was built by @itsyashvardhan. Find more projects and contributions on GitHub.
           </p>
 
           <div className="pt-2">
             <a
-              href="https://github.com/pythonicboat"
+              href="https://github.com/itsyashvardhan"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-3 py-2 rounded bg-primary text-primary-foreground hover:opacity-95"
