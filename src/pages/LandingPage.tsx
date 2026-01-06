@@ -379,12 +379,12 @@ const LandingPage = () => {
               <p className="text-sm text-gray-500">
                 Built with ❤️ by{" "}
                 <a
-                  href="https://github.com/PythonicBoat"
+                  href="https://github.com/itsyashvardhan"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-orange-600 hover:text-orange-700"
                 >
-                  @PythonicBoat
+                  @itsyashvardhan
                 </a>
               </p>
             </div>
