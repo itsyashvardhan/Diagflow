@@ -237,30 +237,65 @@ const Index = () => {
       content,
       timestamp: Date.now(),
       attachments: attachments.length > 0 ? attachments : undefined,
+      status: "sending", // Start with sending status
     };
 
+    const userMessageIndex = messages.length;
     const updatedHistory = [...messages, userMessage];
     setMessages(updatedHistory);
     setIsGenerating(true);
+
+    // Helper to update the user message status
+    const updateMessageStatus = (updates: Partial<Message>) => {
+      setMessages(prev => {
+        const newMessages = [...prev];
+        if (newMessages[userMessageIndex]) {
+          newMessages[userMessageIndex] = { ...newMessages[userMessageIndex], ...updates };
+        }
+        return newMessages;
+      });
+    };
 
     try {
       const response = await generateDiagram(
         settings.geminiApiKey,
         content,
         currentDiagram,
-        updatedHistory
+        updatedHistory,
+        // onRetry callback - called when rate limited and retrying
+        (retryInfo) => {
+          updateMessageStatus({
+            status: "queued",
+            retryAttempt: retryInfo.attempt,
+            estimatedWaitSeconds: retryInfo.estimatedWaitSeconds,
+            queueReason: retryInfo.reason,
+          });
+
+          // Show a gentle toast notification
+          toast({
+            title: retryInfo.reason,
+            description: `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries} • Wait ~${retryInfo.estimatedWaitSeconds}s`,
+          });
+        }
       );
 
       const assistantMessage: Message = {
         role: "assistant",
         content: `${response.explanation}\n\n${response.suggestions.length > 0
-            ? "**Suggestions:**\n" + response.suggestions.map((s) => `• ${s}`).join("\n")
-            : ""
+          ? "**Suggestions:**\n" + response.suggestions.map((s) => `• ${s}`).join("\n")
+          : ""
           }`,
         timestamp: Date.now(),
       };
 
-      const finalHistory = [...updatedHistory, assistantMessage];
+      // Mark user message as sent (success)
+      updateMessageStatus({
+        status: "sent",
+        retryAttempt: undefined,
+        estimatedWaitSeconds: undefined
+      });
+
+      const finalHistory = [...messages, { ...userMessage, status: "sent" as const }, assistantMessage];
       setMessages(finalHistory);
       setCurrentDiagram(response.code);
 
@@ -287,9 +322,25 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Generation error:", error);
+
+      // Mark user message as error
+      updateMessageStatus({
+        status: "error",
+        retryAttempt: undefined,
+        estimatedWaitSeconds: undefined
+      });
+
+      // Check if it's a rate limit error and show specific guidance
+      const isRateLimitError = error instanceof Error &&
+        (error.name === "RateLimitError" ||
+          error.message.toLowerCase().includes("rate limit") ||
+          error.message.includes("429"));
+
       toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate diagram",
+        title: isRateLimitError ? "Rate Limit Reached" : "Generation Failed",
+        description: isRateLimitError
+          ? "API quota exceeded. Wait a moment and try again, or upgrade your API tier for higher limits."
+          : (error instanceof Error ? error.message : "Failed to generate diagram"),
         variant: "destructive",
       });
     } finally {

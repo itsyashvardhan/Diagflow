@@ -1,26 +1,43 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Diagflow - Flow Copilot</title>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diagflow - Flow Copilot</title>
   <meta name="description" content="Design copilot only" />
-    <meta name="author" content="Diagflow" />
+  <meta name="author" content="Diagflow" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="alternate icon" href="/favicon.ico" />
+  <!-- Self-hosted Manrope font - no external CDN latency -->
+  <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/fonts/fonts.css" />
 
-    <meta property="og:title" content="Diagflow - Flow Copilot" />
+  <!-- Material Symbols - loaded async to not block render -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+    as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+      rel="stylesheet" />
+  </noscript>
+
+  <meta property="og:title" content="Diagflow - Flow Copilot" />
   <meta property="og:description" content="Design copilot only" />
-    <meta property="og:type" content="website" />
+  <meta property="og:type" content="website" />
   <meta property="og:image" content="/placeholder.svg" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@_yashvs" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@_yashvs" />
   <meta name="twitter:image" content="/placeholder.svg" />
-  </head>
+</head>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

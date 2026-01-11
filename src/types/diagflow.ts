@@ -13,6 +13,14 @@ export interface Message {
   content: string;
   timestamp?: number;
   attachments?: Attachment[];
+  /** Message delivery status for queue visualization */
+  status?: "sending" | "queued" | "sent" | "error";
+  /** Retry attempt number (for queued messages) */
+  retryAttempt?: number;
+  /** Estimated wait time in seconds (for queued messages) */
+  estimatedWaitSeconds?: number;
+  /** User-friendly reason for queue/retry (e.g., "High demand, retrying...") */
+  queueReason?: string;
 }
 
 export interface DiagramHistoryEntry {
