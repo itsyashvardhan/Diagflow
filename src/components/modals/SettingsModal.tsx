@@ -60,7 +60,7 @@ export function SettingsModal({ open, onOpenChange, settings, onSave }: Settings
             <p className="text-xs text-muted-foreground">
               Get your API key from{" "}
               <a
-                href="https://makersuite.google.com/app/apikey"
+                href="https://aistudio.google.com/app/api-keys"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline inline-flex items-center gap-1"

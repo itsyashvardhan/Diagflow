@@ -1,11 +1,44 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { Workflow, Linkedin } from "lucide-react";
+import { Linkedin } from "lucide-react";
 
 // Modern X (formerly Twitter) logo component
 const XLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+// Custom Diagflow logo - Geometric "D" with integrated flow paths
+const DiagflowLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 64 64" className={className} fill="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#f97316" />
+        <stop offset="100%" stopColor="#f59e0b" />
+      </linearGradient>
+    </defs>
+    {/* Rounded container */}
+    <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#brandGradient)" />
+    {/* Main D outline - left vertical stem */}
+    <path d="M20 14 L20 50" stroke="white" strokeWidth="4" strokeLinecap="round" opacity="0.95" />
+    {/* D curve - right side */}
+    <path
+      d="M20 14 C20 14, 28 14, 36 18 C44 22, 48 28, 48 32 C48 36, 44 42, 36 46 C28 50, 20 50, 20 50"
+      stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.95"
+    />
+    {/* Internal flow path - horizontal */}
+    <path d="M24 32 L38 32" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
+    {/* Internal flow path - diagonal top */}
+    <path d="M24 24 L34 28" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+    {/* Internal flow path - diagonal bottom */}
+    <path d="M24 40 L34 36" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+    {/* Node accent - center right (AI/main node) */}
+    <circle cx="40" cy="32" r="3.5" fill="white" opacity="0.95" />
+    {/* Node accent - top connection */}
+    <circle cx="24" cy="24" r="2.5" fill="white" opacity="0.8" />
+    {/* Node accent - bottom connection */}
+    <circle cx="24" cy="40" r="2.5" fill="white" opacity="0.8" />
   </svg>
 );
 
@@ -72,10 +105,8 @@ const LandingPage = () => {
       {/* Navigation - Loads instantly */}
       <nav className={`sticky top-0 z-50 backdrop-blur-md border-b transition-all duration-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'} ${isDark ? 'bg-black/80 border-gray-800/50' : 'bg-white/80 border-gray-200/50'}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-              <Workflow className="w-4 h-4 text-white" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <DiagflowLogo className="w-9 h-9" />
             <span className="font-sans text-lg font-semibold tracking-tight">Diagflow</span>
           </div>
 
@@ -110,39 +141,53 @@ const LandingPage = () => {
       <main>
 
         {/* Hero Section */}
-        <section className="relative pt-20 pb-24 lg:pt-32 lg:pb-40 overflow-hidden" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <section className="relative min-h-[90vh] lg:min-h-screen flex items-center py-20 lg:py-0 overflow-hidden" aria-labelledby="hero-heading">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full">
             <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
 
               {/* Left Content - Staggered load */}
               <div className={`flex flex-col items-start text-left max-w-2xl transition-all duration-700 ease-out ${showHero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 <h1 id="hero-heading" className={`font-sans text-5xl sm:text-6xl lg:text-[4.5rem] font-semibold tracking-tighter leading-[1.05] mb-8 ${isDark ? 'text-[#F5F5F7]' : 'text-[#111]'}`}>
                   Your{" "}
-                  <span className={`font-medium bg-clip-text text-transparent ${isDark ? 'bg-gradient-to-r from-orange-500 to-amber-500' : 'bg-gradient-to-r from-orange-400 to-amber-400'}`}>
+                  {/* Clean gradient text with subtle glow - Jony Ive approach */}
+                  <span
+                    className={`font-medium bg-clip-text text-transparent bg-gradient-to-r ${isDark ? 'from-orange-500 to-amber-500' : 'from-orange-400 to-amber-400'}`}
+                    style={{
+                      textShadow: isDark ? '0 0 40px rgba(249, 115, 22, 0.3)' : 'none',
+                      WebkitBackgroundClip: 'text'
+                    }}
+                  >
                     Design Copilot
                   </span>{" "}
                   for Diagrams.
                 </h1>
-                <p className={`text-lg sm:text-xl font-normal leading-relaxed mb-10 max-w-lg tracking-wide ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
+                <p className={`text-lg sm:text-xl font-normal leading-relaxed mb-10 max-w-lg tracking-wide ${isDark ? 'text-[#A1A1A6]' : 'text-[#515154]'}`}>
                   The fastest way to visualize complex systems. Describe your architecture in any language, and let Archie handle the structure.
                 </p>
-                <div className="flex flex-col sm:flex-row items-start gap-6 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
                   <Link
                     to="/app"
-                    className={`group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-medium transition-all hover:opacity-90 active:scale-[0.98] ${isDark ? 'bg-white text-black' : 'bg-[#111] text-white'}`}
+                    className={`group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${isDark
+                      ? 'bg-gradient-to-b from-white to-gray-100 text-black shadow-lg shadow-white/10'
+                      : 'bg-gradient-to-b from-[#111] to-[#222] text-white shadow-lg shadow-black/20'
+                      }`}
                   >
                     Start Visualizing for Free
                     <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-0.5">arrow_forward</span>
                   </Link>
+                  <p className={`flex items-center text-sm font-medium ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
+                    <span className="material-symbols-outlined text-green-500 text-base mr-1.5">check_circle</span>
+                    No credit card required
+                  </p>
                 </div>
-                <p className={`mt-6 text-sm font-medium opacity-60 ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                  No credit card required. Free forever plan available.
-                </p>
               </div>
 
-              {/* Right Preview Card - Staggered load */}
+              {/* Right Preview Card - Staggered load with depth */}
               <div className={`relative w-full aspect-[1/1] lg:aspect-[5/4] transition-all duration-700 ease-out delay-100 ${showPreview ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
-                <div className={`absolute inset-2 lg:inset-0 rounded-2xl shadow-2xl border overflow-hidden flex flex-col ${isDark ? 'bg-[#111] border-gray-800' : 'bg-white border-gray-200'}`}>
+                <div className={`absolute inset-2 lg:inset-0 rounded-2xl overflow-hidden flex flex-col ${isDark
+                  ? 'bg-[#111] border border-white/[0.08] shadow-2xl shadow-orange-500/[0.05]'
+                  : 'bg-white border border-black/[0.08] shadow-2xl shadow-black/10'
+                  }`}>
 
                   {/* Window Controls */}
                   <div className={`h-10 border-b flex items-center px-4 gap-2 ${isDark ? 'border-gray-800 bg-black/40' : 'border-gray-100 bg-gray-50'}`}>
@@ -383,9 +428,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
-              <Workflow className="w-3.5 h-3.5 text-white" />
-            </div>
+            <DiagflowLogo className="w-7 h-7" />
             <span className="font-sans font-semibold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflow</span>
           </div>
 
@@ -421,7 +464,6 @@ const LandingPage = () => {
         </div>
       </footer>
 
-      {/* Inline Styles - optimized for performance */}
       <style>{`
         .font-sans {
           font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

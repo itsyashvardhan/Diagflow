@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Transparent background version - just the icon elements in white -->
+  
+  <!-- Abstract diagram nodes forming a "D" shape -->
+  <!-- Top node -->
+  <circle cx="24" cy="18" r="5" fill="white"/>
+  
+  <!-- Middle-right node (larger, represents AI/central intelligence) -->
+  <circle cx="42" cy="32" r="7" fill="white"/>
+  
+  <!-- Bottom node -->
+  <circle cx="24" cy="46" r="5" fill="white"/>
+  
+  <!-- Connecting flow lines -->
+  <!-- Top to middle -->
+  <path d="M28 20 Q36 20 40 26" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  
+  <!-- Middle to bottom -->
+  <path d="M40 38 Q36 44 28 46" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  
+  <!-- Vertical connection (left side - the "D" stem) -->
+  <path d="M24 23 L24 41" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

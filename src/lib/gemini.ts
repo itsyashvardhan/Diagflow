@@ -1,3 +1,4 @@
+import { logger } from "./logger";
 import { Message, DiagramResponse } from "@/types/diagflow";
 
 export const GEMINI_MODEL = "gemini-2.5-flash-lite";
@@ -108,12 +109,91 @@ Your sole responsibility is to help users create and refine **flowcharts, techni
 
 Your mission:
 1. **Diagram Generation**
-   - Support flowcharts, UML, ER diagrams, architecture/system diagrams.
+   - Support flowcharts, UML, ER diagrams, architecture/system diagrams, Gantt charts, sequence diagrams, and more.
    - Always provide outputs in **Mermaid.js format**.
    - Favor 2D figure-style styling (rounded silhouettes, subtle depth) when defining Mermaid classes.
-  - Maintain professional consistency across diagrams.
-  - Ensure every diagram compiles successfully with **Mermaid.js v11.12.0**. Avoid experimental syntax, beta directives, or features introduced after this version.
-    - When the user supplies image attachments (PNG or JPG), inspect them carefully, extract the relevant architectural or workflow details, and incorporate those insights into the generated diagram.
+   - Maintain professional consistency across diagrams.
+   - Ensure every diagram compiles successfully with **Mermaid.js v11.12.0**.
+
+   **SUPPORTED DIAGRAM TYPES (Fully Stable):**
+   - \`flowchart LR/TD/TB/BT/RL\` - Flowcharts and process diagrams
+   - \`sequenceDiagram\` - Sequence/interaction diagrams
+   - \`classDiagram\` - UML class diagrams
+   - \`stateDiagram-v2\` - State machine diagrams (always use -v2)
+   - \`erDiagram\` - Entity-relationship diagrams
+   - \`gantt\` - Gantt/timeline charts
+   - \`pie\` - Simple pie charts
+   - \`gitGraph\` - Git branching diagrams
+   - \`mindmap\` - Mind maps and hierarchical ideas
+   - \`timeline\` - Historical/project timelines
+   - \`quadrantChart\` - 2x2 quadrant analysis
+   - \`requirementDiagram\` - Requirements traceability
+   - \`journey\` - User journey maps
+   - \`C4Context\`, \`C4Container\`, \`C4Component\` - C4 architecture diagrams
+
+   **BETA DIAGRAM TYPES (Use with care):**
+   - \`xychart-beta\` - XY/bar/line charts (see strict rules below)
+   - \`sankey-beta\` - Flow/Sankey diagrams
+   - \`block-beta\` - Block diagrams with containers
+
+   **XY Chart Syntax Rules (CRITICAL):**
+   - Use \`xychart-beta\` as the diagram type
+   - x-axis format: \`x-axis "Label" [val1, val2, val3]\` OR \`x-axis "Label"\` (no type modifiers)
+   - y-axis format: \`y-axis "Label" min --> max\` OR \`y-axis "Label"\` (no type modifiers like "logarithmic", "linear", etc.)
+   - Do NOT use \`type logarithmic\`, \`type linear\`, or \`min\`/\`max\` as standalone keywords on axes
+   - **ONLY \`line\` and \`bar\` are supported for data series** - NO scatter, area, pie, or other chart types
+   - Data format: \`line [1, 2, 3, 4]\` or \`bar [1, 2, 3, 4]\` — simple number arrays only
+   - **NO labels or titles after data arrays** — this is invalid: \`line [1, 2, 3] "My Label"\`
+   - **NO objects in arrays** — this is invalid: \`line [{x: 1, y: 2}]\`
+   - Valid example:
+     \`\`\`
+     xychart-beta
+       title "Model Comparison"
+       x-axis ["Model A", "Model B", "Model C"]
+       y-axis "Score" 0 --> 100
+       bar [85, 72, 91]
+     \`\`\`
+   - **If you need labeled scatter plots or complex data visualization, use a flowchart instead** with nodes representing data points
+
+   **Flowchart Syntax Rules (CRITICAL):**
+   - Every node referenced in links MUST be defined first (e.g., \`A --> B\` requires both A and B to exist)
+   - Use \`<br/>\` for line breaks in node labels, NOT \`\\n\` (e.g., \`A["Line 1<br/>Line 2"]\`)
+   - \`linkStyle\` format: \`linkStyle N stroke:#color,stroke-width:Npx\` — avoid \`stroke-dasharray\` with spaces
+   - For dashed lines, prefer \`-.->|label|->\` over complex linkStyle
+   - When styling subgraphs, ensure the subgraph ID is simple (no special characters)
+   - Avoid Unicode arrows (→, ↑) in labels — use text like "increases" or ASCII arrows
+
+   **Sequence Diagram Rules:**
+   - Use \`sequenceDiagram\` (no hyphen)
+   - Participants: \`participant A as "Display Name"\` or just \`A\`
+   - Messages: \`A->>B: message\` (solid), \`A-->>B: message\` (dashed)
+   - Self-messages: \`A->>A: note\`
+   - Notes: \`Note over A,B: text\` or \`Note right of A: text\`
+
+   **State Diagram Rules:**
+   - Always use \`stateDiagram-v2\` for best compatibility
+   - Start state: \`[*] --> StateA\`
+   - End state: \`StateA --> [*]\`
+   - Composite states: Use \`state StateA { ... }\`
+
+   **Gantt Chart Rules:**
+   - \`dateFormat YYYY-MM-DD\` is recommended
+   - Sections: \`section SectionName\`
+   - Tasks: \`Task Name : status, id, startDate, duration\`
+   - Duration can be: \`7d\`, \`1w\`, \`after id\`
+
+   **Mindmap Rules:**
+   - Root node with indentation for hierarchy
+   - Use \`::\` for node styling: \`::icon(fa fa-book)\`
+   
+   **Sankey Diagram Rules (Beta):**
+   - Format: \`Source,Target,Value\` (CSV-like)
+   - Values must be positive numbers
+   - Keep flow counts manageable (<50 for performance)
+
+   **When the user supplies image attachments (PNG or JPG):**
+   - Inspect them carefully, extract the relevant architectural or workflow details
+   - Incorporate those insights into the generated diagram
 
 2. **Explanations**
    - Provide a clear, concise natural-language explanation of each diagram.
@@ -340,8 +420,8 @@ export async function generateDiagram(
             reason: "High demand, retrying...",
           });
 
-          console.warn(
-            `[Gemini API] Rate limited (429). Attempt ${attempt + 1}/${RATE_LIMIT_CONFIG.maxRetries + 1}. ` +
+          logger.warn(
+            `Rate limited (429). Attempt ${attempt + 1}/${RATE_LIMIT_CONFIG.maxRetries + 1}. ` +
             `Retrying in ${estimatedWaitSeconds}s...`
           );
           await sleep(backoffDelay);
@@ -374,8 +454,8 @@ export async function generateDiagram(
             reason: "Server busy, retrying...",
           });
 
-          console.warn(
-            `[Gemini API] Server error (${response.status}). Attempt ${attempt + 1}/${RATE_LIMIT_CONFIG.maxRetries + 1}. ` +
+          logger.warn(
+            `Server error (${response.status}). Attempt ${attempt + 1}/${RATE_LIMIT_CONFIG.maxRetries + 1}. ` +
             `Retrying in ${estimatedWaitSeconds}s...`
           );
           await sleep(backoffDelay);
@@ -416,7 +496,7 @@ export async function generateDiagram(
           reason: "Connection issue, retrying...",
         });
 
-        console.warn(
+        logger.warn(
           `[Gemini API] Network error. Attempt ${attempt + 1}/${RATE_LIMIT_CONFIG.maxRetries + 1}. ` +
           `Retrying in ${estimatedWaitSeconds}s...`
         );

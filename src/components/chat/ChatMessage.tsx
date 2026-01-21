@@ -1,6 +1,6 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Message } from "@/types/diagflow";
-import { Bot, User, Clock, Loader2, AlertCircle } from "lucide-react";
+import { Clock, Loader2, AlertCircle, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface ChatMessageProps {
@@ -20,7 +20,7 @@ function MessageStatusBadge({ status, retryAttempt, estimatedWaitSeconds, queueR
     sending: {
       icon: Loader2,
       text: "Sending...",
-      className: "text-primary animate-pulse",
+      className: "text-blue-400",
       iconClassName: "animate-spin",
     },
     queued: {
@@ -32,7 +32,7 @@ function MessageStatusBadge({ status, retryAttempt, estimatedWaitSeconds, queueR
     error: {
       icon: AlertCircle,
       text: "Failed",
-      className: "text-destructive",
+      className: "text-red-400",
       iconClassName: "",
     },
   };
@@ -43,11 +43,11 @@ function MessageStatusBadge({ status, retryAttempt, estimatedWaitSeconds, queueR
   const Icon = config.icon;
 
   return (
-    <div className={`flex items-center gap-1.5 text-xs mt-1 px-2 ${config.className}`}>
+    <div className={`flex items-center gap-1.5 text-xs mt-2 ${config.className}`}>
       <Icon className={`w-3 h-3 ${config.iconClassName}`} />
-      <span>{config.text}</span>
+      <span className="font-medium">{config.text}</span>
       {status === "queued" && estimatedWaitSeconds && estimatedWaitSeconds > 0 && (
-        <span className="text-muted-foreground">
+        <span className="text-muted-foreground/70">
           (~{estimatedWaitSeconds}s)
         </span>
       )}
@@ -55,7 +55,49 @@ function MessageStatusBadge({ status, retryAttempt, estimatedWaitSeconds, queueR
   );
 }
 
-// Memoized component to prevent re-renders when other messages change
+// Copy button component - ChatGPT style
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="
+        flex items-center gap-1.5
+        text-[11px] text-muted-foreground/60
+        hover:text-muted-foreground
+        transition-colors duration-150
+        mt-1.5 py-0.5 px-1 -ml-1
+        rounded hover:bg-white/[0.05]
+      "
+      title={copied ? "Copied!" : "Copy message"}
+    >
+      {copied ? (
+        <>
+          <Check className="w-3 h-3 text-green-400" />
+          <span className="text-green-400 font-medium">Copied</span>
+        </>
+      ) : (
+        <>
+          <Copy className="w-3 h-3" />
+          <span>Copy</span>
+        </>
+      )}
+    </button>
+  );
+}
+
+// Jony Ive-inspired ChatMessage: minimal, clean, purposeful
 export const ChatMessage = memo(function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
   const hasContent = Boolean(message.content && message.content.trim().length > 0);
@@ -63,39 +105,37 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
 
   return (
     <div
-      className={`flex gap-3 mb-4 animate-slide-in ${isUser ? "flex-row-reverse" : "flex-row"
-        }`}
+      className={`flex gap-4 mb-6 ${isUser ? "justify-end" : "justify-start"}`}
     >
-      <div
-        className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${isUser
-          ? "bg-gradient-to-br from-primary to-accent"
-          : "glass-panel"
-          } ${isQueued ? "opacity-70" : ""}`}
-      >
-        {isUser ? (
-          <User className="w-5 h-5 text-white" />
-        ) : (
-          <Bot className="w-5 h-5 text-primary" />
-        )}
-      </div>
-
-      <div
-        className={`flex-1 max-w-[80%] ${isUser ? "text-right" : "text-left"
-          }`}
-      >
+      <div className={`max-w-[85%] ${isUser ? "items-end" : "items-start"} flex flex-col`}>
         {hasContent && (
           <div
-            className={`inline-block px-4 py-3 rounded-2xl transition-opacity ${isUser
-              ? "bg-gradient-to-br from-primary to-accent text-white"
-              : "glass-panel"
-              } ${isQueued ? "opacity-80" : ""}`}
+            className={`
+              px-4 py-3 rounded-2xl
+              transition-all duration-200
+              ${isUser
+                ? "bg-[#3478F6] text-white rounded-br-md shadow-sm"
+                : "bg-white/[0.08] backdrop-blur-sm border border-white/[0.06] rounded-bl-md"
+              }
+              ${isQueued ? "opacity-70" : ""}
+            `}
           >
             {isUser ? (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              <p className="text-[15px] leading-relaxed whitespace-pre-wrap font-normal">
                 {message.content}
               </p>
             ) : (
-              <div className="prose prose-sm prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-primary prose-code:text-accent prose-code:bg-background/50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+              <div className="prose prose-sm prose-invert max-w-none 
+                prose-p:my-1.5 prose-p:leading-relaxed
+                prose-ul:my-2 prose-ol:my-2 
+                prose-li:my-0.5 
+                prose-headings:my-3 prose-headings:font-semibold
+                prose-strong:text-white prose-strong:font-semibold
+                prose-code:text-blue-300 prose-code:bg-white/[0.06] 
+                prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-normal
+                prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
+                text-[15px]"
+              >
                 <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
             )}
@@ -104,13 +144,17 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
 
         {message.attachments && message.attachments.length > 0 && (
           <div
-            className={`mt-2 flex flex-wrap gap-2 ${isUser ? "justify-end" : "justify-start"
-              }`}
+            className={`mt-2 flex flex-wrap gap-2 ${isUser ? "justify-end" : "justify-start"}`}
           >
             {message.attachments.map((attachment) => (
               <div
                 key={attachment.id}
-                className={`overflow-hidden rounded-lg border border-border/60 bg-background/40 ${isQueued ? "opacity-70" : ""}`}
+                className={`
+                  overflow-hidden rounded-xl 
+                  border border-white/[0.08] 
+                  shadow-sm
+                  ${isQueued ? "opacity-70" : ""}
+                `}
               >
                 <img
                   src={attachment.dataUrl}
@@ -122,8 +166,25 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
           </div>
         )}
 
-        {/* Status indicator for user messages */}
-        {isUser && (
+        {/* Action buttons row - Copy for all messages */}
+        {hasContent && !isQueued && (
+          <div className={`flex items-center gap-2 ${isUser ? "justify-end" : "justify-start"}`}>
+            <CopyButton text={message.content || ""} />
+
+            {/* Status indicator for user messages */}
+            {isUser && (
+              <MessageStatusBadge
+                status={message.status}
+                retryAttempt={message.retryAttempt}
+                estimatedWaitSeconds={message.estimatedWaitSeconds}
+                queueReason={message.queueReason}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Status indicator when queued (no copy button during queue) */}
+        {isUser && isQueued && (
           <MessageStatusBadge
             status={message.status}
             retryAttempt={message.retryAttempt}
@@ -132,17 +193,16 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
           />
         )}
 
+        {/* Timestamp - subtle, Ive-style */}
         {message.timestamp && message.status !== "queued" && message.status !== "sending" && (
-          <p className="text-xs text-muted-foreground mt-1 px-2">
-            {new Date(message.timestamp).toLocaleTimeString()}
+          <p className="text-[11px] text-muted-foreground/50 mt-1 font-medium tracking-wide">
+            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         )}
       </div>
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison: only re-render if the message object reference changed
-  // This is more efficient for large chat histories
   return (
     prevProps.message.content === nextProps.message.content &&
     prevProps.message.role === nextProps.message.role &&
@@ -154,4 +214,3 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
     prevProps.message.queueReason === nextProps.message.queueReason
   );
 });
-

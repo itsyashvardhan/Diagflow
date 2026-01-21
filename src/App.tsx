@@ -20,6 +20,7 @@ const App = () => (
           <Route path="/" element={<LandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/app" element={<Index />} />
+          <Route path="/d/:shareId" element={<Index />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

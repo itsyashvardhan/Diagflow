@@ -12,11 +12,15 @@ import { CodeViewModal } from "@/components/modals/CodeViewModal";
 import { ExportModal } from "@/components/modals/ExportModal";
 import { HistoryModal } from "@/components/modals/HistoryModal";
 import { HelpModal } from "@/components/modals/HelpModal";
+import { ShareModal } from "@/components/modals/ShareModal";
 import { storage } from "@/lib/storage";
+import { getSharedDiagram } from "@/lib/shareLinks";
 import { generateDiagram } from "@/lib/gemini";
 import { Message, DiagramHistoryEntry, AppSettings, Attachment } from "@/types/diagflow";
 import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
+import { useParams } from "react-router-dom";
+import { logger } from "@/lib/logger";
 import {
   Settings,
   Sparkles,
@@ -27,10 +31,13 @@ import {
   Workflow,
   RotateCcw,
 } from "lucide-react";
-import { Github } from "lucide-react";
+import { Github, Share2 } from "lucide-react";
 import { CreditsModal } from "@/components/modals/CreditsModal";
 
 const Index = () => {
+  // Get share ID from URL params (for /d/:shareId route)
+  const { shareId } = useParams<{ shareId?: string }>();
+
   // State
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentDiagram, setCurrentDiagram] = useState("");
@@ -48,7 +55,7 @@ const Index = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Chat column sizing (resizable, max 40% of viewport)
-  const MIN_CHAT_WIDTH = 280; // px
+  const MIN_CHAT_WIDTH = 320; // px - ensures usability of chat input
   const [chatWidth, setChatWidth] = useState<number>(() => {
     try {
       const saved = localStorage.getItem("diagflow:chatWidth");
@@ -141,6 +148,7 @@ const Index = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -160,6 +168,53 @@ const Index = () => {
     // Always dark mode
     document.documentElement.classList.add('dark');
   }, []);
+
+  // Handle shared diagram loading from Supabase
+  useEffect(() => {
+    const loadSharedData = async () => {
+      if (shareId) {
+        setIsGenerating(true);
+        try {
+          const shared = await getSharedDiagram(shareId);
+          if (shared) {
+            setCurrentDiagram(shared.code);
+            // Optionally add a system message explaining this is a shared diagram
+            setMessages(prev => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                role: "assistant",
+                content: `You're viewing a shared diagram: **${shared.title || "Untitled"}**`,
+                timestamp: new Date().toISOString()
+              }
+            ]);
+            toast({
+              title: "Shared Diagram Loaded",
+              description: `Viewing: ${shared.title || "Shared Diagram"}`,
+            });
+          } else {
+            toast({
+              title: "Diagram Not Found",
+              description: "The shared diagram link might be invalid or expired.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          logger.error("Error loading shared diagram", error);
+          toast({
+            title: "Error Loading Shared Diagram",
+            description: "There was an issue loading the shared diagram.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGenerating(false);
+          // Clean up the URL to /app or similar if desired, 
+          // but keeping /d/shareId is fine for direct links
+        }
+      }
+    };
+    loadSharedData();
+  }, [shareId]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -321,7 +376,7 @@ const Index = () => {
         description: "Your system diagram is ready",
       });
     } catch (error) {
-      console.error("Generation error:", error);
+      logger.error("Generation error", error);
 
       // Mark user message as error
       updateMessageStatus({
@@ -441,6 +496,35 @@ const Index = () => {
     }
   };
 
+  // Fit diagram to screen - calculates optimal zoom based on SVG and container size
+  const handleFitToScreen = () => {
+    const svgContainer = document.getElementById("diagram-svg-container");
+    const svg = svgContainer?.querySelector("svg");
+    const canvas = document.querySelector("[data-diagram-canvas]") as HTMLElement;
+
+    if (!svg || !canvas) {
+      setZoom(1);
+      return;
+    }
+
+    // Get natural SVG dimensions
+    const svgWidth = svg.getBBox?.()?.width || svg.clientWidth || 800;
+    const svgHeight = svg.getBBox?.()?.height || svg.clientHeight || 600;
+
+    // Get available canvas space (with padding)
+    const padding = 64; // 32px on each side
+    const canvasWidth = canvas.clientWidth - padding;
+    const canvasHeight = canvas.clientHeight - padding;
+
+    // Calculate zoom to fit both dimensions
+    const zoomX = canvasWidth / svgWidth;
+    const zoomY = canvasHeight / svgHeight;
+    const optimalZoom = Math.min(zoomX, zoomY, 2); // Cap at 200%
+
+    // Clamp between 0.1 and 2
+    setZoom(Math.max(0.1, Math.min(optimalZoom, 2)));
+  };
+
   // Rotating text helper for the welcome panel
   function RotatingText({ phrases, interval = 3000 }: { phrases: string[]; interval?: number }) {
     const [index, setIndex] = useState(0);
@@ -466,81 +550,103 @@ const Index = () => {
       <div className="fixed inset-0 pointer-events-none" style={{ background: "var(--gradient-background)" }} />
 
       {/* Header */}
-      <header className="relative z-10 glass-panel border-b border-white/10 px-6 py-4">
+      <header className="relative z-20 premium-blur border-b border-white/5 px-6 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
-              <Workflow className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-4 group cursor-default">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <Workflow className="w-5 h-5 text-white" />
+              </div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold gradient-text">Diagflow</h1>
+              <h1 className="text-xl font-bold tracking-tight gradient-text">Diagflow</h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-1.5 py-1 glass-panel rounded-full shadow-inner">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowHistory(true)}
-              className="glass-panel"
+              className="h-8 rounded-full px-4 hover:bg-white/5 transition-all"
             >
-              <History className="w-4 h-4 mr-2" />
-              History
+              <History className="w-3.5 h-3.5 mr-2 opacity-70" />
+              <span className="text-xs font-medium">History</span>
             </Button>
+
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowExamples(true)}
-              className="glass-panel"
+              className="h-8 rounded-full px-4 hover:bg-white/5 transition-all"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Examples
+              <Sparkles className="w-3.5 h-3.5 mr-2 opacity-70" />
+              <span className="text-xs font-medium">Examples</span>
             </Button>
+
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowSettings(true)}
-              className="glass-panel"
+              className="h-8 rounded-full px-4 hover:bg-white/5 transition-all"
             >
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
+              <Settings className="w-3.5 h-3.5 mr-2 opacity-70" />
+              <span className="text-xs font-medium">Settings</span>
             </Button>
+
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowHelp(true)}
-              className="glass-panel"
-              title="Getting Started Guide"
+              onClick={() => setShowShare(true)}
+              className="h-8 rounded-full px-4 hover:bg-white/5 transition-all text-primary"
             >
-              <HelpCircle className="w-4 h-4" />
+              <Share2 className="w-3.5 h-3.5 mr-2" />
+              <span className="text-xs font-medium">Share</span>
             </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowCredits(true)}
-              className="glass-panel"
-              title="Credits & Author"
-            >
-              <Github className="w-4 h-4" />
-            </Button>
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleFullscreen}
-              className="glass-panel"
-              title="Toggle Fullscreen"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="w-4 h-4" />
-              ) : (
-                <Maximize2 className="w-4 h-4" />
-              )}
-            </Button>
+            <div className="flex items-center gap-1 ml-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowHelp(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+                title="Help Guide"
+              >
+                <HelpCircle className="w-3.5 h-3.5 opacity-70" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowCredits(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all text-muted-foreground/50 hover:text-foreground"
+                title="Credits & GitHub"
+              >
+                <Github className="w-3.5 h-3.5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleFullscreen}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-3.5 h-3.5 opacity-70" />
+                ) : (
+                  <Maximize2 className="w-3.5 h-3.5 opacity-70" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -549,48 +655,54 @@ const Index = () => {
       <div className="relative z-10 flex-1 flex overflow-hidden">
         {/* Chat Column (resizable) */}
         <div
-          style={{ width: `${chatWidth}px` }}
-          className="flex flex-col border-r border-white/10 min-w-[200px] max-w-[40vw]"
+          style={{ width: `${chatWidth}px`, minWidth: '320px' }}
+          className="flex flex-col border-r border-white/5 shrink-0"
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <span className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">
-              Conversation
-            </span>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/50">
+                Workspace
+              </span>
+              <span className="text-sm font-semibold text-foreground/80">
+                Conversation
+              </span>
+            </div>
             <Button
               size="sm"
               variant="ghost"
-              className="gap-2"
+              className="h-8 gap-2 rounded-full px-3 text-xs opacity-60 hover:opacity-100 transition-opacity"
               onClick={handleRefreshChat}
               disabled={isGenerating}
-              title="Start a new conversation"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>Reset</span>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>New</span>
             </Button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
               <div className="h-full flex items-center justify-center">
-                <div className="text-center space-y-3 max-w-sm animate-float">
-                  <div className="w-20 h-20 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto">
-                    <Workflow className="w-10 h-10 text-white" />
+                <div className="text-center space-y-4 max-w-sm animate-slide-up">
+                  <div className="relative w-24 h-24 mx-auto mb-6">
+                    <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-2xl animate-pulse" />
+                    <div className="relative w-24 h-24 bg-gradient-to-br from-primary to-accent rounded-3xl flex items-center justify-center shadow-2xl">
+                      <Workflow className="w-12 h-12 text-white" />
+                    </div>
                   </div>
-                  <h2 className="text-xl font-semibold opacity-90" style={{ fontSize: 'calc(1.25rem + 2pt)' }}>Text to Flow</h2>
-                  <div className="text-muted-foreground" style={{ fontSize: 'calc(0.875rem + 2pt)', opacity: 0.80 }}>
-                    <span className="font-medium">Ask Archie to</span>
-                    <span className="ml-2">
-                      <RotatingText
-                        phrases={[
-                          "design your system",
-                          "create flowcharts",
-                          "produce illustrations",
-                          "generate architecture diagrams",
-                          "explain data flows",
-                        ]}
-                      />
-                    </span>
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground/90 leading-tight">Flow your thoughts</h2>
+                  <div className="text-muted-foreground/70" style={{ fontSize: '15px' }}>
+                    <p className="mb-2">Ask Archie to</p>
+                    <RotatingText
+                      interval={2500}
+                      phrases={[
+                        "design your system architecture",
+                        "visualize user auth flows",
+                        "create database entity relations",
+                        "produce sequence illustrations",
+                        "generate git branch visuals",
+                      ]}
+                    />
                   </div>
                 </div>
               </div>
@@ -605,7 +717,7 @@ const Index = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-white/10">
+          <div className="p-6 border-t border-white/5 bg-black/5">
             <ChatInput
               onSend={handleSendMessage}
               onShowExamples={() => setShowExamples(true)}
@@ -616,49 +728,49 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Resize handle (thin visible bar + stacked <> icon for affordance) */}
+        {/* Tactical Resize handle */}
         <div
           role="separator"
-          aria-orientation="vertical"
           onMouseDown={handleMouseDownResize}
           onTouchStart={handleTouchStartResize}
-          className="w-6 relative flex items-center justify-center cursor-col-resize select-none"
+          className="w-1.5 hover:w-2 group relative flex items-center justify-center cursor-col-resize select-none transition-all duration-300"
         >
-          {/* thin visual bar */}
-          <div className="w-4 h-10 bg-white/5 rounded" />
+          {/* Main divider line */}
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/10 group-hover:bg-primary/40 transition-colors" />
 
-          {/* stacked < > icons to indicate draggable divider (pointer-events-none so drag still works) */}
-          <div className="absolute flex flex-col items-center justify-center pointer-events-none gap-1">
-            <span className="text-[10px] leading-none text-muted-foreground/70">{'<'}</span>
-            <span className="text-[10px] leading-none text-muted-foreground/70">{'>'}</span>
-          </div>
+          {/* Subtle tactile strip */}
+          <div className="w-1 h-12 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
 
         {/* Diagram Column */}
-        <div className="flex-1 flex flex-col relative">
-          {/* Controls Bar */}
-          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
-            <DiagramControls
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              onViewCode={() => setShowCodeView(true)}
-              onExport={() => setShowExport(true)}
-              canUndo={historyIndex > 0}
-              canRedo={historyIndex < diagramHistory.length - 1}
-              disabled={!currentDiagram}
-            />
+        <div className="flex-1 flex flex-col relative bg-muted/10">
+          {/* Floating Controls Overlay */}
+          <div className="absolute top-6 left-6 right-6 z-10 flex items-center justify-between pointer-events-none">
+            <div className="pointer-events-auto">
+              <DiagramControls
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                onViewCode={() => setShowCodeView(true)}
+                onExport={() => setShowExport(true)}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < diagramHistory.length - 1}
+                disabled={!currentDiagram}
+              />
+            </div>
 
-            <ZoomControls
-              zoom={zoom}
-              onZoomIn={handleZoomInExpanded}
-              onZoomOut={handleZoomOutExpanded}
-              onZoomReset={handleZoomResetExpanded}
-              onFullscreen={toggleFullscreen}
-            />
+            <div className="pointer-events-auto">
+              <ZoomControls
+                zoom={zoom}
+                onZoomIn={handleZoomInExpanded}
+                onZoomOut={handleZoomOutExpanded}
+                onZoomReset={handleZoomResetExpanded}
+                onFitToScreen={handleFitToScreen}
+              />
+            </div>
           </div>
 
-          {/* Diagram Viewer */}
-          <div className="flex-1 dotted-grid relative">
+          {/* Diagram Canvas */}
+          <div className="flex-1 dotted-grid relative" data-diagram-canvas>
             <DiagramViewer
               code={currentDiagram}
               theme={settings.theme}
@@ -711,6 +823,12 @@ const Index = () => {
       <CreditsModal
         open={showCredits}
         onOpenChange={setShowCredits}
+      />
+
+      <ShareModal
+        open={showShare}
+        onOpenChange={setShowShare}
+        diagramCode={currentDiagram}
       />
     </div>
   );

@@ -45,38 +45,42 @@ export function HistoryModal({
               <p>No history yet</p>
             </div>
           ) : (
-            history.map((entry, index) => (
-              <div
-                key={index}
-                className="glass-panel p-4 hover-glow transition-all group"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
-                      </span>
+            [...history].reverse().map((entry, reversedIndex) => {
+              // Calculate the original index for restoring
+              const originalIndex = history.length - 1 - reversedIndex;
+              return (
+                <div
+                  key={originalIndex}
+                  className="glass-panel p-4 hover-glow transition-all group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm line-clamp-2 mb-2">
+                        {entry.prompt}
+                      </p>
+                      <pre className="text-xs text-muted-foreground bg-background/50 p-2 rounded overflow-x-auto line-clamp-3">
+                        {entry.code}
+                      </pre>
                     </div>
-                    <p className="text-sm line-clamp-2 mb-2">
-                      {entry.prompt}
-                    </p>
-                    <pre className="text-xs text-muted-foreground bg-background/50 p-2 rounded overflow-x-auto line-clamp-3">
-                      {entry.code}
-                    </pre>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRestore(originalIndex)}
+                      className="flex-shrink-0"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Restore
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleRestore(index)}
-                    className="flex-shrink-0"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Restore
-                  </Button>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </DialogContent>

@@ -23,10 +23,11 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 10%;
 
-  /* Brand primary changed to warm orange for better contrast */
-  --primary: 28 100% 48%; /* orange */
-  --primary-foreground: 0 0% 100%;
-  --primary-glow: 28 100% 58%;
+    /* Brand primary changed to warm orange for better contrast */
+    --primary: 28 100% 48%;
+    /* orange */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 28 100% 58%;
 
     --secondary: 40 15% 90%;
     --secondary-foreground: 240 10% 10%;
@@ -34,17 +35,17 @@ All colors MUST be HSL.
     --muted: 40 10% 92%;
     --muted-foreground: 240 5% 45%;
 
-  /* Accent moved towards a warmer amber to harmonize with primary */
-  --accent: 30 90% 45%;
-  --accent-foreground: 0 0% 100%;
-  --accent-glow: 30 90% 55%;
+    /* Accent moved towards a warmer amber to harmonize with primary */
+    --accent: 30 90% 45%;
+    --accent-foreground: 0 0% 100%;
+    --accent-glow: 30 90% 55%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 240 10% 88%;
     --input: 240 10% 90%;
-  --ring: 28 100% 48%;
+    --ring: 28 100% 48%;
 
     --radius: 0.75rem;
 
@@ -53,16 +54,16 @@ All colors MUST be HSL.
     --glass-border: 240 10% 85% / 0.5;
 
     /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(28 100% 48%), hsl(32 100% 50%));
-  /* Soft warm circular glow at the top + subtle bottom-right wash */
-  --gradient-background: radial-gradient(ellipse at top center, hsl(28 100% 88% / 0.32), transparent 40%),
-                        radial-gradient(ellipse at bottom right, hsl(32 60% 95% / 0.25), transparent 50%);
-  /* Small focused glow toward the top-left for UI depth */
-  --gradient-glow: radial-gradient(circle at 15% 12%, hsl(28 100% 60% / 0.18), transparent 60%);
+    --gradient-primary: linear-gradient(135deg, hsl(28 100% 48%), hsl(32 100% 50%));
+    /* Soft warm circular glow at the top + subtle bottom-right wash */
+    --gradient-background: radial-gradient(ellipse at top center, hsl(28 100% 88% / 0.32), transparent 40%),
+      radial-gradient(ellipse at bottom right, hsl(32 60% 95% / 0.25), transparent 50%);
+    /* Small focused glow toward the top-left for UI depth */
+    --gradient-glow: radial-gradient(circle at 15% 12%, hsl(28 100% 60% / 0.18), transparent 60%);
 
     /* Shadows */
-  --shadow-glass: 0 8px 32px hsl(240 10% 0% / 0.08);
-  --shadow-glow: 0 0 40px hsl(28 100% 48% / 0.2);
+    --shadow-glass: 0 8px 32px hsl(240 10% 0% / 0.08);
+    --shadow-glow: 0 0 40px hsl(28 100% 48% / 0.2);
     --shadow-elevation: 0 20px 60px hsl(240 10% 0% / 0.1);
 
     /* Transitions */
@@ -82,10 +83,10 @@ All colors MUST be HSL.
     --popover: 240 10% 8%;
     --popover-foreground: 210 40% 98%;
 
-  /* Slightly darker orange for dark mode to improve contrast */
-  --primary: 28 100% 50%;
-  --primary-foreground: 210 40% 98%;
-  --primary-glow: 28 100% 60%;
+    /* Slightly darker orange for dark mode to improve contrast */
+    --primary: 28 100% 50%;
+    --primary-foreground: 210 40% 98%;
+    --primary-glow: 28 100% 60%;
 
     --secondary: 240 10% 15%;
     --secondary-foreground: 210 40% 98%;
@@ -93,16 +94,16 @@ All colors MUST be HSL.
     --muted: 240 8% 12%;
     --muted-foreground: 215 20.2% 65.1%;
 
-  --accent: 30 90% 52%;
-  --accent-foreground: 210 40% 98%;
-  --accent-glow: 30 90% 60%;
+    --accent: 30 90% 52%;
+    --accent-foreground: 210 40% 98%;
+    --accent-glow: 30 90% 60%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 240 10% 18%;
     --input: 240 10% 15%;
-  --ring: 28 100% 50%;
+    --ring: 28 100% 50%;
 
     --radius: 0.75rem;
 
@@ -111,15 +112,15 @@ All colors MUST be HSL.
     --glass-border: 240 10% 25% / 0.2;
 
     /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(28 100% 50%), hsl(32 100% 52%));
-  /* Dark theme: gentle warm halo at the top to add depth without brightening the whole canvas */
-  --gradient-background: radial-gradient(ellipse at top center, hsl(28 100% 28% / 0.20), transparent 35%),
-              radial-gradient(ellipse at bottom right, hsl(32 40% 12% / 0.12), transparent 45%);
-  --gradient-glow: radial-gradient(circle at 12% 10%, hsl(28 100% 44% / 0.12), transparent 60%);
+    --gradient-primary: linear-gradient(135deg, hsl(28 100% 50%), hsl(32 100% 52%));
+    /* Dark theme: gentle warm halo at the top to add depth without brightening the whole canvas */
+    --gradient-background: radial-gradient(ellipse at top center, hsl(28 100% 28% / 0.20), transparent 35%),
+      radial-gradient(ellipse at bottom right, hsl(32 40% 12% / 0.12), transparent 45%);
+    --gradient-glow: radial-gradient(circle at 12% 10%, hsl(28 100% 44% / 0.12), transparent 60%);
 
     /* Shadows */
-  --shadow-glass: 0 8px 32px hsl(240 10% 0% / 0.4);
-  --shadow-glow: 0 0 40px hsl(28 100% 50% / 0.3);
+    --shadow-glass: 0 8px 32px hsl(240 10% 0% / 0.4);
+    --shadow-glow: 0 0 40px hsl(28 100% 50% / 0.3);
     --shadow-elevation: 0 20px 60px hsl(240 10% 0% / 0.6);
 
     /* Transitions */
@@ -146,9 +147,11 @@ All colors MUST be HSL.
     width: 12px;
     height: 12px;
   }
+
   ::-webkit-scrollbar-track {
     background: hsl(var(--background));
   }
+
   ::-webkit-scrollbar-thumb {
     background: hsl(28 100% 48% / 0.95);
     border-radius: 999px;
@@ -164,51 +167,108 @@ All colors MUST be HSL.
 
 @layer utilities {
   .glass-panel {
-    @apply bg-card/60 backdrop-blur-xl border border-white/10;
+    @apply bg-card/45 backdrop-blur-2xl border border-white/10;
+    box-shadow:
+      inset 0 1px 1px 0 hsl(0 0% 100% / 0.1),
+      0 4px 12px -2px hsl(0 0% 0% / 0.12),
+      0 2px 4px -1px hsl(0 0% 0% / 0.08);
+  }
+
+  .dark .glass-panel {
+    @apply bg-black/40 backdrop-blur-3xl border border-white/[0.08];
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.05),
+      0 12px 24px -4px hsl(240 10% 2% / 0.4),
+      0 8px 16px -4px hsl(240 10% 2% / 0.3);
   }
 
   .gradient-text {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-primary);
+    filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.15));
   }
 
   .hover-glow {
-    @apply transition-all duration-300;
+    @apply transition-all duration-500;
+    transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
   }
 
   .hover-glow:hover {
     box-shadow: var(--shadow-glow);
+    transform: translateY(-1px);
   }
 
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float 8s ease-in-out infinite;
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+      transform: translateY(-12px) rotate(0.5deg);
+    }
   }
 
   .animate-slide-in {
-    animation: slideIn 0.3s ease-out;
+    animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-24px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .animate-scale-in {
-    animation: scaleIn 0.2s ease-out;
+    animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   .dotted-grid {
-    background-image: radial-gradient(circle, hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px);
-    background-size: 20px 20px;
+    background-image: radial-gradient(circle, hsl(var(--muted-foreground) / 0.08) 0.75px, transparent 0.75px);
+    background-size: 24px 24px;
+  }
+
+  .premium-blur {
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
   }
 }
