@@ -148,6 +148,16 @@ const Index = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 1024);
+
+  // Responsive listener
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [showShare, setShowShare] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -564,39 +574,39 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 px-1.5 py-1 glass-panel rounded-full shadow-inner">
+          <div className="flex items-center gap-1.5 px-1.5 py-1 glass-panel rounded-full shadow-inner max-w-[calc(100vw-48px)] overflow-x-auto no-scrollbar">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowHistory(true)}
-              className="h-8 rounded-full px-4 hover:bg-white/5 transition-all"
+              className="h-8 rounded-full px-3 sm:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <History className="w-3.5 h-3.5 mr-2 opacity-70" />
-              <span className="text-xs font-medium">History</span>
+              <History className="w-3.5 h-3.5 sm:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden sm:inline">History</span>
             </Button>
 
-            <div className="w-px h-4 bg-white/10 mx-0.5" />
+            <div className="hidden sm:block w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowExamples(true)}
-              className="h-8 rounded-full px-4 hover:bg-white/5 transition-all"
+              className="h-8 rounded-full px-3 sm:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <Sparkles className="w-3.5 h-3.5 mr-2 opacity-70" />
-              <span className="text-xs font-medium">Examples</span>
+              <Sparkles className="w-3.5 h-3.5 sm:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden sm:inline">Examples</span>
             </Button>
 
-            <div className="w-px h-4 bg-white/10 mx-0.5" />
+            <div className="hidden sm:block w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowSettings(true)}
-              className="h-8 rounded-full px-4 hover:bg-white/5 transition-all"
+              className="h-8 rounded-full px-3 sm:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <Settings className="w-3.5 h-3.5 mr-2 opacity-70" />
-              <span className="text-xs font-medium">Settings</span>
+              <Settings className="w-3.5 h-3.5 sm:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden sm:inline">Settings</span>
             </Button>
 
             <div className="w-px h-4 bg-white/10 mx-0.5" />
@@ -605,15 +615,15 @@ const Index = () => {
               variant="ghost"
               size="sm"
               onClick={() => setShowShare(true)}
-              className="h-8 rounded-full px-4 hover:bg-white/5 transition-all text-primary"
+              className="h-8 rounded-full px-3 sm:px-4 hover:bg-white/5 transition-all text-primary shrink-0"
             >
-              <Share2 className="w-3.5 h-3.5 mr-2" />
-              <span className="text-xs font-medium">Share</span>
+              <Share2 className="w-3.5 h-3.5 sm:mr-2" />
+              <span className="text-xs font-medium hidden sm:inline">Share</span>
             </Button>
 
             <div className="w-px h-4 bg-white/10 mx-0.5" />
 
-            <div className="flex items-center gap-1 ml-1">
+            <div className="flex items-center gap-1 ml-1 shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
@@ -638,7 +648,7 @@ const Index = () => {
                 variant="ghost"
                 size="icon"
                 onClick={toggleFullscreen}
-                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+                className="hidden sm:inline-flex w-8 h-8 rounded-full hover:bg-white/5 transition-all"
               >
                 {isFullscreen ? (
                   <Minimize2 className="w-3.5 h-3.5 opacity-70" />
@@ -651,30 +661,33 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="relative z-10 flex-1 flex overflow-hidden">
+      <div className="relative z-10 flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Chat Column (resizable) */}
         <div
-          style={{ width: `${chatWidth}px`, minWidth: '320px' }}
-          className="flex flex-col border-r border-white/5 shrink-0"
+          style={{
+            width: isMobile ? '100%' : `${chatWidth}px`,
+            maxHeight: isMobile ? '45%' : 'none',
+            minWidth: isMobile ? '100%' : '320px'
+          }}
+          className="flex flex-col border-b lg:border-b-0 lg:border-r border-white/5 shrink-0 transition-[width,max-height] duration-300"
         >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <div className="flex items-center justify-between px-6 py-3 lg:py-4 border-b border-white/5">
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/50">
+              <span className="text-[9px] lg:text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/50">
                 Workspace
               </span>
-              <span className="text-sm font-semibold text-foreground/80">
+              <span className="text-xs lg:text-sm font-semibold text-foreground/80">
                 Conversation
               </span>
             </div>
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 gap-2 rounded-full px-3 text-xs opacity-60 hover:opacity-100 transition-opacity"
+              className="h-7 lg:h-8 gap-2 rounded-full px-2 lg:px-3 text-[10px] lg:text-xs opacity-60 hover:opacity-100 transition-opacity"
               onClick={handleRefreshChat}
               disabled={isGenerating}
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
               <span>New</span>
             </Button>
           </div>
@@ -717,7 +730,7 @@ const Index = () => {
           </div>
 
           {/* Input */}
-          <div className="p-6 border-t border-white/5 bg-black/5">
+          <div className="p-4 lg:p-6 border-t border-white/5 bg-black/5">
             <ChatInput
               onSend={handleSendMessage}
               onShowExamples={() => setShowExamples(true)}
@@ -728,12 +741,12 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Tactical Resize handle */}
+        {/* Tactical Resize handle (desktop only) */}
         <div
           role="separator"
           onMouseDown={handleMouseDownResize}
           onTouchStart={handleTouchStartResize}
-          className="w-1.5 hover:w-2 group relative flex items-center justify-center cursor-col-resize select-none transition-all duration-300"
+          className="hidden lg:flex w-1.5 hover:w-2 group relative items-center justify-center cursor-col-resize select-none transition-all duration-300"
         >
           {/* Main divider line */}
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/10 group-hover:bg-primary/40 transition-colors" />
@@ -745,12 +758,12 @@ const Index = () => {
         {/* Diagram Column */}
         <div className="flex-1 flex flex-col relative bg-muted/10">
           {/* Floating Controls Overlay */}
-          <div className="absolute top-6 left-6 right-6 z-10 flex items-center justify-between pointer-events-none">
+          <div className="absolute top-3 lg:top-6 left-3 lg:left-6 right-3 lg:right-6 z-10 flex flex-col lg:flex-row items-end lg:items-center justify-between pointer-events-none gap-2">
             <div className="pointer-events-auto">
               <DiagramControls
                 onUndo={handleUndo}
                 onRedo={handleRedo}
-                onViewCode={() => setShowCodeView(true)}
+                onShowCode={() => setShowCodeView(true)}
                 onExport={() => setShowExport(true)}
                 canUndo={historyIndex > 0}
                 canRedo={historyIndex < diagramHistory.length - 1}
