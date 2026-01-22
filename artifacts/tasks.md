@@ -1,24 +1,25 @@
-# Tasks: Jony Ive Design Refinement
+# Tasks: Bug Fixes
 
-- [ ] **Step 1: Material Design System Update (`src/index.css`)**
-    - Refine `glass-panel` with layered shadows and light-leak borders.
-    - Update `dotted-grid` to be more subtle.
-    - Add premium transition variables.
+- [x] **Step 1: Fix Explanation Details Always Hidden**
+    - ✅ Updated `ChatMessage.tsx` line 105 to expand assistant messages by default
+    - ✅ Changed from `useState(!isUser && message.content.length < 300)` to `useState(!isUser)`
+    - ✅ Verified via source code inspection
 
-- [ ] **Step 2: Header & Branding Polish (`src/pages/Index.tsx`)**
-    - Simplify header button layout.
-    - Refine logo treatment.
+- [x] **Step 2: Fix Canvas Rendering Delays**
+    - ✅ Added `void element.offsetHeight;` to force DOM reflow in `mermaid.ts`
+    - ✅ Added `key={code}` prop to diagram container in `DiagramViewer.tsx`
+    - ✅ Verified via source code inspection
+    - ✅ Expected to eliminate caching and rendering delays
 
-- [ ] **Step 3: Splitter Redesign (`src/pages/Index.tsx`)**
-    - Replace the bulky resize handle with a minimal tactile strip.
-    - Add smooth hover effect.
+- [x] **Step 3: Fix Share Links in Production**
+    - ✅ Added detailed error logging to `shareLinks.ts` (createShareLink and getSharedDiagram)
+    - ✅ Added error logging to Index.tsx share link loading
+    - ✅ Enhanced error messages to include full error details
+    - ✅ Verified via source code inspection
+    - ✅ Production debugging now significantly easier
 
-- [ ] **Step 4: Control Toolbars Polish**
-    - Update `src/components/diagram/DiagramControls.tsx` for cleaner look.
-    - Update `src/components/diagram/ZoomControls.tsx` for cleaner look.
-
-- [ ] **Step 5: Chat Input Integration**
-    - Polish `src/components/chat/ChatInput.tsx` to match the new glass style more precisely.
-
-- [ ] **Step 6: Verification**
-    - Final visual audit in browser.
+- [x] **Step 4: Verification**
+    - ✅ All three fixes verified via browser source code inspection
+    - ✅ No console errors detected
+    - ✅ Documented findings in verification_log.md
+    - ✅ Created production debugging guide

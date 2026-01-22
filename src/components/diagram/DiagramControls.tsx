@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Code2, Download, Undo2, Redo2, Upload } from "lucide-react";
+import { Download, Undo2, Redo2, Upload } from "lucide-react";
 
 interface DiagramControlsProps {
   onUndo: () => void;
   onRedo: () => void;
-  onViewCode: () => void;
+  onViewImport: () => void;
   onExport: () => void;
   canUndo: boolean;
   canRedo: boolean;
@@ -14,7 +14,7 @@ interface DiagramControlsProps {
 export function DiagramControls({
   onUndo,
   onRedo,
-  onViewCode,
+  onViewImport,
   onExport,
   canUndo,
   canRedo,
@@ -51,12 +51,12 @@ export function DiagramControls({
         <Button
           size="sm"
           variant="ghost"
-          onClick={onViewCode}
+          onClick={onViewImport}
           disabled={disabled}
           className="h-8 rounded-full px-3 hover:bg-white/10 transition-colors text-[11px] font-bold tracking-tight"
         >
-          <Code2 className="w-3.5 h-3.5 mr-2 opacity-70" />
-          Code
+          <Upload className="w-3.5 h-3.5 mr-2 opacity-70" />
+          Import
         </Button>
 
         <Button

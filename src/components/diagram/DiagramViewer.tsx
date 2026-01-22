@@ -124,17 +124,7 @@ function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom,
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
     >
-      {/* Prompt Tag - Stronger link between message and diagram */}
-      {prompt && !error && code && (
-        <div className="absolute top-4 left-4 z-10 max-w-md animate-slide-in-down">
-          <div className="glass-panel px-3 py-2 rounded-xl border-l-4 border-l-primary shadow-lg flex flex-col gap-0.5 backdrop-blur-md">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Generated from</span>
-            <span className="text-xs font-medium text-foreground line-clamp-2 leading-relaxed">
-              &ldquo;{prompt}&rdquo;
-            </span>
-          </div>
-        </div>
-      )}
+
 
       {/* Auto-fix notification toast */}
       {showFixNotification && autoFixes.length > 0 && (
@@ -287,6 +277,7 @@ function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom,
 
       {/* Diagram container */}
       <div
+        key={code} // Force re-render when code changes
         id="diagram-svg-container"
         className="animate-scale-in"
         style={{

@@ -1,6 +1,6 @@
 import { memo, useState } from "react";
 import { Message } from "@/types/diagflow";
-import { Clock, Loader2, AlertCircle, Copy, Check, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { Clock, Loader2, AlertCircle, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface ChatMessageProps {
@@ -102,7 +102,6 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
   const isUser = message.role === "user";
   const hasContent = Boolean(message.content && message.content.trim().length > 0);
   const isQueued = message.status === "queued" || message.status === "sending";
-  const [isExpanded, setIsExpanded] = useState(!isUser && message.content.length < 300); // Collapse long assistant strings
 
   return (
     <div
@@ -126,30 +125,18 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
                 {message.content}
               </p>
             ) : (
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="flex items-center gap-2 text-xs font-medium text-muted-foreground/80 hover:text-white transition-colors select-none w-full text-left"
-                >
-                  {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                  <span className="uppercase tracking-wider opacity-80">Explanation & Details</span>
-                </button>
-
-                {isExpanded && (
-                  <div className="prose prose-sm prose-invert max-w-none 
-                      prose-p:my-1.5 prose-p:leading-relaxed
-                      prose-ul:my-2 prose-ol:my-2 
-                      prose-li:my-0.5 
-                      prose-headings:my-3 prose-headings:font-semibold
-                      prose-strong:text-white prose-strong:font-semibold
-                      prose-code:text-blue-300 prose-code:bg-white/[0.06] 
-                      prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-normal
-                      prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
-                      text-[15px] animate-slide-up"
-                  >
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
-                  </div>
-                )}
+              <div className="prose prose-sm prose-invert max-w-none 
+                  prose-p:my-1.5 prose-p:leading-relaxed
+                  prose-ul:my-2 prose-ol:my-2 
+                  prose-li:my-0.5 
+                  prose-headings:my-3 prose-headings:font-semibold
+                  prose-strong:text-white prose-strong:font-semibold
+                  prose-code:text-blue-300 prose-code:bg-white/[0.06] 
+                  prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-normal
+                  prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
+                  text-[15px]"
+              >
+                <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
             )}
           </div>
@@ -180,7 +167,7 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
         )}
 
         {/* Action buttons row - Copy for all messages */}
-        {hasContent && !isQueued && (isUser || isExpanded) && (
+        {hasContent && !isQueued && (
           <div className={`flex items-center gap-2 ${isUser ? "justify-end" : "justify-start"}`}>
             <CopyButton text={message.content || ""} />
 

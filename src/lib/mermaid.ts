@@ -189,6 +189,8 @@ export const renderDiagram = async (
     // Safely insert the SVG
     if (svg && element) {
       element.innerHTML = svg;
+      // Force immediate DOM update and repaint
+      void element.offsetHeight; // Trigger reflow
     }
   } catch (error) {
     console.error("Mermaid rendering error:", error);

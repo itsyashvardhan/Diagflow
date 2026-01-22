@@ -185,10 +185,12 @@ const Index = () => {
   useEffect(() => {
     const loadSharedData = async () => {
       if (shareId) {
+        console.log("Loading shared diagram with ID:", shareId);
         setIsGenerating(true);
         try {
           const shared = await getSharedDiagram(shareId);
           if (shared) {
+            console.log("Shared diagram loaded successfully:", { id: shared.id, title: shared.title });
             setCurrentDiagram(shared.code);
             // Optionally add a system message explaining this is a shared diagram
             setMessages(prev => [
@@ -205,17 +207,20 @@ const Index = () => {
               description: `Viewing: ${shared.title || "Shared Diagram"}`,
             });
           } else {
+            console.warn("Shared diagram not found:", shareId);
             toast({
               title: "Diagram Not Found",
-              description: "The shared diagram link might be invalid or expired.",
+              description: "The shared diagram link might be invalid or expired. Check the console for details.",
               variant: "destructive",
             });
           }
         } catch (error) {
           logger.error("Error loading shared diagram", error);
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          console.error("Shared diagram loading failed:", { shareId, error, errorMessage });
           toast({
             title: "Error Loading Shared Diagram",
-            description: "There was an issue loading the shared diagram.",
+            description: `Failed to load: ${errorMessage}. Check browser console for details.`,
             variant: "destructive",
           });
         } finally {
@@ -755,7 +760,7 @@ const Index = () => {
               <DiagramControls
                 onUndo={handleUndo}
                 onRedo={handleRedo}
-                onShowCode={() => setShowCodeView(true)}
+                onViewImport={() => setShowCodeView(true)}
                 onExport={() => setShowExport(true)}
                 canUndo={historyIndex > 0}
                 canRedo={historyIndex < diagramHistory.length - 1}
