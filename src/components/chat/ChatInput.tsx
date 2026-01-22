@@ -219,7 +219,7 @@ export function ChatInput({
   return (
     <div
       className={`glass-panel p-4 space-y-4 relative transition-all duration-300 rounded-3xl ${isDragOver ? "ring-2 ring-primary/50 shadow-2xl shadow-primary/10" : "shadow-lg"
-        }`}
+        } focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)]`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

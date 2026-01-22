@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { Linkedin } from "lucide-react";
+import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
 
 // Modern X (formerly Twitter) logo component
 const XLogo = ({ className }: { className?: string }) => (
@@ -9,38 +10,6 @@ const XLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Custom Diagflow logo - Geometric "D" with integrated flow paths
-const DiagflowLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 64 64" className={className} fill="none" aria-hidden="true">
-    <defs>
-      <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#f97316" />
-        <stop offset="100%" stopColor="#f59e0b" />
-      </linearGradient>
-    </defs>
-    {/* Rounded container */}
-    <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#brandGradient)" />
-    {/* Main D outline - left vertical stem */}
-    <path d="M20 14 L20 50" stroke="white" strokeWidth="4" strokeLinecap="round" opacity="0.95" />
-    {/* D curve - right side */}
-    <path
-      d="M20 14 C20 14, 28 14, 36 18 C44 22, 48 28, 48 32 C48 36, 44 42, 36 46 C28 50, 20 50, 20 50"
-      stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.95"
-    />
-    {/* Internal flow path - horizontal */}
-    <path d="M24 32 L38 32" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
-    {/* Internal flow path - diagonal top */}
-    <path d="M24 24 L34 28" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-    {/* Internal flow path - diagonal bottom */}
-    <path d="M24 40 L34 36" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-    {/* Node accent - center right (AI/main node) */}
-    <circle cx="40" cy="32" r="3.5" fill="white" opacity="0.95" />
-    {/* Node accent - top connection */}
-    <circle cx="24" cy="24" r="2.5" fill="white" opacity="0.8" />
-    {/* Node accent - bottom connection */}
-    <circle cx="24" cy="40" r="2.5" fill="white" opacity="0.8" />
-  </svg>
-);
 
 const LandingPage = () => {
   const [isDark, setIsDark] = useState(true);

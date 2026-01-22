@@ -1,17 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <defs>
-    <linearGradient id="df-gradient" x1="6" y1="58" x2="58" y2="6" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FF8A2B" />
-      <stop offset="1" stop-color="#FFB347" />
+    <defs>
+    <linearGradient id="df-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f97316" />
+        <stop offset="50%" stop-color="#f59e0b" />
+        <stop offset="100%" stop-color="#fbbf24" />
     </linearGradient>
-    <linearGradient id="df-accent" x1="16" y1="48" x2="48" y2="16" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFE4C2" stop-opacity="0.2" />
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.7" />
-    </linearGradient>
-  </defs>
-  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#df-gradient)" />
-  <rect x="4" y="4" width="56" height="56" rx="16" stroke="rgba(255,255,255,0.16)" stroke-width="2" />
-  <path d="M20.5 21.5h12.4c6.9 0 11.1 4 11.1 10.1 0 6.1-4.2 10.2-11.1 10.2h-8.3l5.6 5.7c0.8 0.8 0.8 2.1 0 2.9-0.8 0.8-2.1 0.8-2.9 0l-9.9-10c-0.8-0.8-0.8-2.1 0-2.9l9.9-10c0.8-0.8 2.1-0.8 2.9 0 0.8 0.8 0.8 2.1 0 2.9l-5.6 5.7h7.5c4 0 6.4-2.3 6.4-5.8 0-3.5-2.4-5.8-6.4-5.8H21.9c-1.1 0-2-0.9-2-2s0.9-2 2-2Z" fill="#FFFFFF" fill-opacity="0.95" />
-  <path d="M42.5 17c1.1 0 2 0.9 2 2v26c0 1.1-0.9 2-2 2s-2-0.9-2-2V19c0-1.1 0.9-2 2-2Z" fill="#FFFFFF" fill-opacity="0.65" />
-  <path d="M11 32c0-11.6 9.4-21 21-21s21 9.4 21 21-9.4 21-21 21S11 43.6 11 32Z" fill="url(#df-accent)" />
+    <filter id="df-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    </defs>
+    <g transform="scale(1.1) translate(-3,-3)">
+    <path d="M22 17 V47" stroke="url(#df-grad)" stroke-width="6" stroke-linecap="round" />
+    <path d="M22 17 H32 C43 17 47 25 47 32 C47 39 43 47 32 47 H22" stroke="url(#df-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <circle cx="47" cy="32" r="4" fill="url(#df-grad)" filter="url(#df-glow)" />
+    </g>
 </svg>

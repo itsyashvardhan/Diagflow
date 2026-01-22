@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { Github, Share2 } from "lucide-react";
 import { CreditsModal } from "@/components/modals/CreditsModal";
+import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { StarterPrompts, QuickTips } from "@/components/onboarding/StarterContent";
 
 const Index = () => {
   // Get share ID from URL params (for /d/:shareId route)
@@ -565,9 +567,7 @@ const Index = () => {
           <div className="flex items-center gap-4 group cursor-default">
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
-              <div className="relative w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <Workflow className="w-5 h-5 text-white" />
-              </div>
+              <DiagflowLogo className="relative w-9 h-9 shadow-lg shadow-primary/20" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight gradient-text">Diagflow</h1>
@@ -697,26 +697,18 @@ const Index = () => {
             {messages.length === 0 && (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center space-y-4 max-w-sm animate-slide-up">
-                  <div className="relative w-24 h-24 mx-auto mb-6">
-                    <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-2xl animate-pulse" />
-                    <div className="relative w-24 h-24 bg-gradient-to-br from-primary to-accent rounded-3xl flex items-center justify-center shadow-2xl">
-                      <Workflow className="w-12 h-12 text-white" />
-                    </div>
+                  <div className="relative w-24 h-24 mx-auto mb-6 opacity-0 hidden">
                   </div>
                   <h2 className="text-2xl font-bold tracking-tight text-foreground/90 leading-tight">Flow your thoughts</h2>
-                  <div className="text-muted-foreground/70" style={{ fontSize: '15px' }}>
-                    <p className="mb-2">Ask Archie to</p>
-                    <RotatingText
-                      interval={2500}
-                      phrases={[
-                        "design your system architecture",
-                        "visualize user auth flows",
-                        "create database entity relations",
-                        "produce sequence illustrations",
-                        "generate git branch visuals",
-                      ]}
-                    />
-                  </div>
+                  <p className="text-sm text-muted-foreground/60 max-w-xs mx-auto">
+                    Visualize complex systems in seconds.
+                  </p>
+
+                  {/* Guided First Steps */}
+                  <StarterPrompts onSelect={(prompt) => handleSendMessage(prompt)} />
+
+                  {/* Quick Tips */}
+                  <QuickTips />
                 </div>
               </div>
             )}
@@ -789,6 +781,7 @@ const Index = () => {
               theme={settings.theme}
               zoom={zoom}
               onWheelZoom={handleWheelZoom}
+              prompt={diagramHistory[historyIndex]?.prompt}
             />
           </div>
         </div>

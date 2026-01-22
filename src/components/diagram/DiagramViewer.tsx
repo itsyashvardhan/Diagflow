@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { renderDiagram, clearDiagram } from "@/lib/mermaid";
 import { sanitizeDiagram, getDiagramTypeLabel } from "@/lib/diagramSanitizer";
+import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
 import { logger } from "@/lib/logger";
 import { MermaidTheme } from "@/types/diagflow";
 import { AlertCircle, RefreshCw, Code, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
@@ -12,9 +13,10 @@ interface DiagramViewerProps {
   theme?: MermaidTheme;
   zoom?: number;
   onWheelZoom?: (newZoom: number, centerX?: number, centerY?: number) => void;
+  prompt?: string;
 }
 
-function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom }: DiagramViewerProps) {
+function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom, prompt }: DiagramViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -122,6 +124,18 @@ function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom 
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
     >
+      {/* Prompt Tag - Stronger link between message and diagram */}
+      {prompt && !error && code && (
+        <div className="absolute top-4 left-4 z-10 max-w-md animate-slide-in-down">
+          <div className="glass-panel px-3 py-2 rounded-xl border-l-4 border-l-primary shadow-lg flex flex-col gap-0.5 backdrop-blur-md">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Generated from</span>
+            <span className="text-xs font-medium text-foreground line-clamp-2 leading-relaxed">
+              &ldquo;{prompt}&rdquo;
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Auto-fix notification toast */}
       {showFixNotification && autoFixes.length > 0 && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 animate-slide-in">
@@ -142,6 +156,20 @@ function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom 
             <span className="text-muted-foreground font-medium">
               {getDiagramTypeLabel(diagramType)}
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* Mini Toolbar / Hints - Bottom Right */}
+      {code && !error && !isLoading && (
+        <div className="absolute bottom-4 right-4 z-10 flex flex-col items-end gap-2 text-[10px] text-muted-foreground/50 font-medium select-none pointer-events-none">
+          <div className="flex items-center gap-1.5 bg-background/20 backdrop-blur-sm px-2 py-1 rounded-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+            <span>Drag to pan</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-background/20 backdrop-blur-sm px-2 py-1 rounded-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+            <span>Scroll to zoom</span>
           </div>
         </div>
       )}
@@ -230,14 +258,30 @@ function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom 
 
       {/* Empty state */}
       {!error && !code && (
-        <div className="text-center space-y-3 max-w-md">
-          <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-            <span className="text-6xl">🦥</span>
+        <div className="text-center space-y-6 max-w-md animate-fade-in relative z-10">
+          <div className="relative mx-auto w-32 h-32 flex items-center justify-center">
+            {/* Ghost Grid - Background */}
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
+              {/* Ghost Nodes */}
+              <div className="absolute top-4 left-4 w-8 h-8 rounded border border-white/20" />
+              <div className="absolute bottom-4 right-4 w-8 h-8 rounded-full border border-white/20" />
+            </div>
+
+            {/* Logo - Foreground */}
+            <div className="relative z-10 p-6 rounded-3xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 shadow-2xl backdrop-blur-sm">
+              <DiagflowLogo className="w-16 h-16 opacity-80" />
+            </div>
           </div>
-          <h3 className="text-lg font-semibold">Nothing here Yet</h3>
-          <p className="text-sm text-muted-foreground">
-            Start a conversation with Archie to generate your first illustration
-          </p>
+
+          <div className="space-y-1">
+            <h3 className="text-xl font-semibold opacity-90">Ready to Visualize</h3>
+            <p className="text-sm text-muted-foreground/60">
+              Your diagrams will appear here
+            </p>
+          </div>
         </div>
       )}
 

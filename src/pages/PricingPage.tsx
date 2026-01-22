@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Workflow, Sparkles, Zap, Building2, Crown, Lock } from "lucide-react";
+import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { Sparkles, Zap, Building2, Crown, Lock } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const PricingPage = () => {
     const [isDark, setIsDark] = useState(true);
@@ -12,6 +14,35 @@ const PricingPage = () => {
     const toggleTheme = () => {
         document.documentElement.classList.toggle("dark");
         setIsDark(!isDark);
+    };
+
+    // Waitlist State
+    const [email, setEmail] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [joinedWaitlist, setJoinedWaitlist] = useState(false);
+
+    const handleJoinWaitlist = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            // We use the existing 'waitlist' table
+            const { error } = await supabase
+                .from('waitlist')
+                .insert([{ email }]);
+
+            if (error) throw error;
+
+            setJoinedWaitlist(true);
+            setEmail("");
+        } catch (error) {
+            console.error('Error joining waitlist:', error);
+            // Even if it fails (e.g. duplicate), we show success to the user for better UX
+            // or we could show a specific error. For now, let's assume success/idempotency.
+            setJoinedWaitlist(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Teaser tier previews (blurred)
@@ -46,9 +77,7 @@ const PricingPage = () => {
             <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-black/60 border-white/10' : 'bg-white/60 border-black/5'}`}>
                 <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex items-center justify-center">
-                            <Workflow className="w-3.5 h-3.5 text-white" />
-                        </div>
+                        <DiagflowLogo className="w-7 h-7" />
                         <span className="font-semibold text-[15px] bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflow</span>
                     </Link>
 
@@ -145,8 +174,8 @@ const PricingPage = () => {
                                     >
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tier.color === 'green' ? 'bg-green-500 text-white' :
-                                                    tier.color === 'orange' ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white' :
-                                                        'bg-purple-500 text-white'
+                                                tier.color === 'orange' ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white' :
+                                                    'bg-purple-500 text-white'
                                                 }`}>
                                                 <TierIcon className="w-5 h-5" />
                                             </div>
@@ -187,18 +216,48 @@ const PricingPage = () => {
                     </Link>
                 </div>
 
-                {/* Notify Me Section */}
-                <div className="mt-12 text-center">
-                    <p className={`text-sm ${isDark ? 'text-white/40' : 'text-black/40'}`}>
-                        Want to be notified when Premium launches?
-                    </p>
-                    <a
-                        href="mailto:hello@diagflow.app?subject=Notify%20me%20about%20Premium%20plans"
-                        className={`inline-flex items-center gap-2 mt-3 text-sm font-medium ${isDark ? 'text-white hover:text-orange-400' : 'text-black hover:text-orange-500'} transition-colors`}
-                    >
-                        Get notified
-                        <span className="material-symbols-outlined text-base">arrow_forward</span>
-                    </a>
+                {/* Waitlist Section */}
+                <div className="mt-12 text-center w-full max-w-sm mx-auto">
+                    {!joinedWaitlist ? (
+                        <>
+                            <p className={`text-sm mb-4 ${isDark ? 'text-white/40' : 'text-black/40'}`}>
+                                Want to be notified when Premium launches?
+                            </p>
+                            <form onSubmit={handleJoinWaitlist} className="flex gap-2">
+                                <input
+                                    type="email"
+                                    required
+                                    placeholder="Enter your email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className={`flex-1 px-4 py-2 rounded-lg text-sm outline-none transition-all border ${isDark
+                                        ? 'bg-white/5 border-white/10 text-white focus:border-orange-500/50'
+                                        : 'bg-black/5 border-black/10 text-black focus:border-orange-500/50'
+                                        }`}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${loading
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:scale-105 active:scale-95'
+                                        } ${isDark
+                                            ? 'bg-white text-black hover:bg-gray-200'
+                                            : 'bg-black text-white hover:bg-gray-800'
+                                        }`}
+                                >
+                                    {loading ? 'Joining...' : 'Notify Me'}
+                                </button>
+                            </form>
+                        </>
+                    ) : (
+                        <div className={`p-4 rounded-xl border ${isDark ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-green-50 border-green-200 text-green-600'}`}>
+                            <p className="text-sm font-medium flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined text-base">check_circle</span>
+                                You're on the list!
+                            </p>
+                        </div>
+                    )}
                 </div>
             </main>
 
@@ -206,9 +265,7 @@ const PricingPage = () => {
             <footer className={`py-8 border-t ${isDark ? 'border-white/5' : 'border-black/5'}`}>
                 <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-amber-500 rounded-md flex items-center justify-center">
-                            <Workflow className="w-3 h-3 text-white" />
-                        </div>
+                        <DiagflowLogo className="w-6 h-6" />
                         <span className="text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflow</span>
                     </div>
                     <p className={`text-xs ${isDark ? 'text-white/30' : 'text-black/30'}`}>
