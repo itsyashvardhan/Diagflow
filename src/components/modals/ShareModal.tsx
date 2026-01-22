@@ -30,7 +30,7 @@ export function ShareModal({ open, onOpenChange, diagramCode, diagramTitle = "My
                     setShareUrl(url);
                 } catch (error) {
                     console.error("Failed to generate share link:", error);
-                    toast.error("Failed to generate share link. Check your Supabase configuration.");
+                    toast.error("Failed to generate share link. Check after some time.");
                 } finally {
                     setIsLoading(false);
                 }
@@ -95,7 +95,7 @@ export function ShareModal({ open, onOpenChange, diagramCode, diagramTitle = "My
                         <div className="flex items-start gap-2 p-2 rounded-md bg-green-500/10 border border-green-500/20">
                             <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                             <p className="text-xs text-green-600 dark:text-green-400">
-                                This link is now persistent and works across all devices via Supabase.
+                                This link is now live!
                             </p>
                         </div>
                     </div>
