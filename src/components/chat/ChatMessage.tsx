@@ -2,6 +2,7 @@ import { memo, useState } from "react";
 import { Message } from "@/types/diagflow";
 import { Clock, Loader2, AlertCircle, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { logger } from "@/lib/logger";
 
 interface ChatMessageProps {
   message: Message;
@@ -65,7 +66,7 @@ function CopyButton({ text }: { text: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      logger.error("Failed to copy", err);
     }
   };
 

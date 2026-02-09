@@ -296,6 +296,7 @@ export function ChatInput({
               }
               fileInputRef.current?.click();
             }}
+            aria-label="Attach image"
           >
             <Paperclip className="w-4 h-4 mr-2 opacity-60" />
             <span className="text-xs font-semibold">Attach</span>
@@ -332,6 +333,7 @@ export function ChatInput({
             onClick={handleSend}
             disabled={(input.trim().length === 0 && attachments.length === 0) || disabled}
             className="h-9 px-5 rounded-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all active:scale-95"
+            aria-label="Send message"
           >
             <Send className="w-3.5 h-3.5 mr-2" />
             <span className="text-xs font-bold uppercase tracking-wider">Send</span>

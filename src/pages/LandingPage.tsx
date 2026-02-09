@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { Linkedin } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
 import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
 
 // Modern X (formerly Twitter) logo component
@@ -16,8 +17,10 @@ const LandingPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showHero, setShowHero] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  useCanonical("/");
 
   useEffect(() => {
+    document.title = "Diagflow — Intelligent Diagram Generation";
     // Check initial state
     setIsDark(document.documentElement.classList.contains("dark"));
 
@@ -71,6 +74,14 @@ const LandingPage = () => {
   return (
     <div className={`min-h-screen font-sans antialiased transition-colors duration-300 ${isDark ? 'bg-[#131b1f] text-[#F5F5F7]' : 'bg-[#f6f7f8] text-[#111111]'}`}>
 
+      {/* Skip to content - WCAG 2.1 AA */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-orange-500 focus:text-white focus:text-sm focus:font-medium"
+      >
+        Skip to content
+      </a>
+
       {/* Navigation - Loads instantly */}
       <nav className={`sticky top-0 z-50 backdrop-blur-md border-b transition-all duration-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'} ${isDark ? 'bg-black/80 border-gray-800/50' : 'bg-white/80 border-gray-200/50'}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -82,6 +93,7 @@ const LandingPage = () => {
           <div className={`hidden md:flex items-center gap-8 text-sm font-medium ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
             <a className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`} href="#features">Features</a>
             <a className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`} href="#how-it-works">How It Works</a>
+            <Link className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`} to="/docs">Docs</Link>
             <Link className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`} to="/pricing">Premium</Link>
           </div>
 
@@ -107,7 +119,7 @@ const LandingPage = () => {
       </nav>
 
       {/* Main content landmark for accessibility */}
-      <main>
+      <main id="main-content">
 
         {/* Hero Section */}
         <section className="relative min-h-[90vh] lg:min-h-screen flex items-center py-20 lg:py-0 overflow-hidden" aria-labelledby="hero-heading">
@@ -430,6 +442,12 @@ const LandingPage = () => {
               @itsyashvardhan
             </a>
           </p>
+
+          {/* Legal Links */}
+          <div className={`flex items-center gap-4 text-xs ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
+            <Link to="/privacy" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`}>Privacy</Link>
+            <Link to="/terms" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`}>Terms</Link>
+          </div>
         </div>
       </footer>
 

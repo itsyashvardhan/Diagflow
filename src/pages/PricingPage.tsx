@@ -2,12 +2,15 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
 import { Sparkles, Zap, Building2, Crown, Lock } from "lucide-react";
+import { useCanonical } from "@/hooks/use-canonical";
 import { supabase } from "@/lib/supabase";
 
 const PricingPage = () => {
     const [isDark, setIsDark] = useState(true);
+    useCanonical("/pricing");
 
     useEffect(() => {
+        document.title = "Pricing | Diagflow";
         setIsDark(document.documentElement.classList.contains("dark"));
     }, []);
 
@@ -269,8 +272,12 @@ const PricingPage = () => {
                         <span className="text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflow</span>
                     </div>
                     <p className={`text-xs ${isDark ? 'text-white/30' : 'text-black/30'}`}>
-                        © 2024 Diagflow. All rights reserved.
+                        © 2026 Diagflow. All rights reserved.
                     </p>
+                    <div className={`flex items-center gap-4 text-xs ${isDark ? 'text-white/30' : 'text-black/30'}`}>
+                        <Link to="/privacy" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Privacy</Link>
+                        <Link to="/terms" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Terms</Link>
+                    </div>
                 </div>
             </footer>
 

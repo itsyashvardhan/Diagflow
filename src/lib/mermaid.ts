@@ -1,5 +1,6 @@
 import { MermaidTheme } from "@/types/diagflow";
 import { sanitizeDiagram, detectDiagramType, getDiagramTypeLabel } from "./diagramSanitizer";
+import { logger } from "./logger";
 
 export interface MermaidConfig {
   theme: MermaidTheme;
@@ -18,7 +19,7 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
         secondaryColor: "#7dd3fc",
         tertiaryColor: "#c084fc",
         fontSize: "16px",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "Manrope, system-ui, sans-serif",
       },
     },
     forest: {
@@ -29,7 +30,7 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
         primaryBorderColor: "#10b981",
         lineColor: "#6ee7b7",
         fontSize: "16px",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "Manrope, system-ui, sans-serif",
       },
     },
     dark: {
@@ -41,7 +42,7 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
         primaryBorderColor: "#6d28d9",
         lineColor: "#a78bfa",
         fontSize: "16px",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "Manrope, system-ui, sans-serif",
       },
     },
     neutral: {
@@ -52,7 +53,7 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
         primaryBorderColor: "#475569",
         lineColor: "#94a3b8",
         fontSize: "16px",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "Manrope, system-ui, sans-serif",
       },
     },
   };
@@ -90,7 +91,7 @@ export const initializeMermaid = async (theme: MermaidTheme = "default") => {
     lastTheme = theme;
     return mermaid;
   } catch (error) {
-    console.error("Failed to initialize Mermaid:", error);
+    logger.error("Failed to initialize Mermaid", error);
     throw new Error("Failed to initialize diagram renderer");
   }
 };
@@ -193,7 +194,7 @@ export const renderDiagram = async (
       void element.offsetHeight; // Trigger reflow
     }
   } catch (error) {
-    console.error("Mermaid rendering error:", error);
+    logger.error("Mermaid rendering error", error);
 
     // Provide a clean, user-friendly error
     if (error instanceof Error) {
@@ -215,7 +216,7 @@ export const clearDiagram = (elementId: string): void => {
       element.innerHTML = "";
     }
   } catch (error) {
-    console.error("Failed to clear diagram:", error);
+    logger.error("Failed to clear diagram", error);
   }
 };
 

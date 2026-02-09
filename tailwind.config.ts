@@ -52,9 +52,8 @@ export default {
       },
       fontFamily: {
         sans: [
+          '"Manrope"',
           '"Söhne"',
-          '"Sohne"',
-          '"Inter"',
           '"Segoe UI"',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -63,7 +62,6 @@ export default {
           'sans-serif',
         ],
         serif: [
-          '"Playfair Display"',
           '"Georgia"',
           '"Times New Roman"',
           'serif',
@@ -110,5 +108,6 @@ export default {
       },
     },
   },
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;

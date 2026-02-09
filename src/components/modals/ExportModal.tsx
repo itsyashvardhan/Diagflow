@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { logger } from "@/lib/logger";
+import { isChartJSDSL } from "@/lib/chartDSL";
 import {
   Dialog,
   DialogContent,
@@ -21,8 +23,18 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
   const [isExportingPng, setIsExportingPng] = useState(false);
   const [isCopyingImage, setIsCopyingImage] = useState(false);
 
+  /** Whether the current diagram is a Chart.js canvas (not SVG) */
+  const isChartJS = useMemo(() => isChartJSDSL(code), [code]);
+
   const getSvgElement = (): SVGSVGElement | null => {
     return document.querySelector("#diagram-svg-container svg") as SVGSVGElement | null;
+  };
+
+  /** Get the Chart.js canvas element from the DOM */
+  const getChartCanvas = (): HTMLCanvasElement | null => {
+    // ChartRenderer renders a canvas inside a flex container
+    // Query for any canvas element inside the diagram area
+    return document.querySelector("canvas[id^='chart-']") as HTMLCanvasElement | null;
   };
 
   /**
@@ -125,7 +137,7 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
       };
 
       img.onerror = (e) => {
-        console.error("Image load error:", e);
+        logger.error("Image load error", e);
         reject(new Error("Failed to load SVG image"));
       };
 
@@ -134,6 +146,14 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
   };
 
   const handleExportSVG = () => {
+    if (isChartJS) {
+      toast({
+        title: "Not Available",
+        description: "SVG export is not available for Chart.js diagrams. Use PNG instead.",
+      });
+      return;
+    }
+
     const svgElement = getSvgElement();
     if (!svgElement) {
       toast({
@@ -160,20 +180,38 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
   };
 
   const handleExportPNG = async () => {
-    const svgElement = getSvgElement();
-    if (!svgElement) {
-      toast({
-        title: "Error",
-        description: "No diagram to export",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsExportingPng(true);
 
     try {
-      const canvas = await svgToCanvas(2); // 2x scale for high resolution
+      let canvas: HTMLCanvasElement | null;
+
+      if (isChartJS) {
+        // For Chart.js, grab the canvas directly and create a high-res copy
+        const sourceCanvas = getChartCanvas();
+        if (!sourceCanvas) {
+          throw new Error("No chart canvas found");
+        }
+        const scale = 2;
+        const w = sourceCanvas.width;
+        const h = sourceCanvas.height;
+        canvas = document.createElement("canvas");
+        canvas.width = w * scale;
+        canvas.height = h * scale;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Could not get canvas context");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(sourceCanvas, 0, 0, canvas.width, canvas.height);
+      } else {
+        const svgElement = getSvgElement();
+        if (!svgElement) {
+          throw new Error("No diagram found");
+        }
+        canvas = await svgToCanvas(2);
+      }
+
       if (!canvas) {
         throw new Error("Failed to create canvas");
       }
@@ -204,7 +242,7 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
         setIsExportingPng(false);
       }, "image/png", 1.0);
     } catch (error) {
-      console.error("PNG export error:", error);
+      logger.error("PNG export error", error);
       toast({
         title: "Error",
         description: "Failed to export PNG. Please try again.",
@@ -215,20 +253,35 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
   };
 
   const handleCopyImage = async () => {
-    const svgElement = getSvgElement();
-    if (!svgElement) {
-      toast({
-        title: "Error",
-        description: "No diagram to copy",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsCopyingImage(true);
 
     try {
-      const canvas = await svgToCanvas(2);
+      let canvas: HTMLCanvasElement | null;
+
+      if (isChartJS) {
+        const sourceCanvas = getChartCanvas();
+        if (!sourceCanvas) {
+          throw new Error("No chart canvas found");
+        }
+        const scale = 2;
+        canvas = document.createElement("canvas");
+        canvas.width = sourceCanvas.width * scale;
+        canvas.height = sourceCanvas.height * scale;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Could not get canvas context");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(sourceCanvas, 0, 0, canvas.width, canvas.height);
+      } else {
+        const svgElement = getSvgElement();
+        if (!svgElement) {
+          throw new Error("No diagram found");
+        }
+        canvas = await svgToCanvas(2);
+      }
+
       if (!canvas) {
         throw new Error("Failed to create canvas");
       }
@@ -253,7 +306,7 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
         description: "Image copied to clipboard",
       });
     } catch (error) {
-      console.error("Copy image error:", error);
+      logger.error("Copy image error", error);
 
       // Check if it's a permission error
       if (error instanceof Error && error.name === "NotAllowedError") {
@@ -293,6 +346,8 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
         </DialogHeader>
 
         <div className="grid gap-3 py-4">
+          {/* SVG Export - only for Mermaid diagrams */}
+          {!isChartJS && (
           <Button
             onClick={handleExportSVG}
             variant="outline"
@@ -310,6 +365,7 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
               </div>
             </div>
           </Button>
+          )}
 
           {/* PNG Export */}
           <Button
@@ -371,7 +427,7 @@ export function ExportModal({ open, onOpenChange, code }: ExportModalProps) {
               <div className="text-left flex-1">
                 <div className="font-semibold">Copy Code</div>
                 <div className="text-xs text-muted-foreground">
-                  Mermaid source code
+                  {isChartJS ? "Chart DSL source code" : "Mermaid source code"}
                 </div>
               </div>
             </div>

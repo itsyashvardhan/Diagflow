@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,7 @@ export function ShareModal({ open, onOpenChange, diagramCode, diagramTitle = "My
                     setShareId(id);
                     setShareUrl(url);
                 } catch (error) {
-                    console.error("Failed to generate share link:", error);
+                    logger.error("Failed to generate share link", error);
                     toast.error("Failed to generate share link. Check after some time.");
                 } finally {
                     setIsLoading(false);

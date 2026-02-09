@@ -1,5 +1,5 @@
 # 🚀 Go-To-Market (GTM) Readiness Audit
-**Diagflow - AI-Powered Diagram Generation Platform**  
+**Diagflow - Intelligent Diagram Generation Platform**  
 **Audit Date:** January 22, 2026  
 **Status:** ⚠️ **PARTIALLY READY** - Critical gaps identified
 
@@ -106,7 +106,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 **Recommendations:**
 - **URGENT:** Update meta tags:
   ```html
-  <title>Diagflow - AI-Powered Diagram Generation for Developers</title>
+  <title>Diagflow - Intelligent Diagram Generation for Developers</title>
   <meta name="description" content="Create professional flowcharts, UML diagrams, and system architecture diagrams instantly with AI. Powered by Gemini 2.5 Flash." />
   ```
 - **URGENT:** Create professional OG image (1200x630px) showcasing the product

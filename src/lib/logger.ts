@@ -6,17 +6,17 @@
 const isDev = import.meta.env.DEV;
 
 export const logger = {
-    info: (message: string, ...args: any[]) => {
+    info: (message: string, ...args: unknown[]) => {
         if (isDev) {
             console.log(`%c[Diagflow]%c ${message}`, 'color: #f97316; font-weight: bold;', 'color: inherit;', ...args);
         }
     },
-    warn: (message: string, ...args: any[]) => {
+    warn: (message: string, ...args: unknown[]) => {
         if (isDev) {
             console.warn(`%c[Diagflow]%c ${message}`, 'color: #f97316; font-weight: bold;', 'color: inherit;', ...args);
         }
     },
-    error: (message: string, ...args: any[]) => {
+    error: (message: string, ...args: unknown[]) => {
         // Errors are always logged for troubleshooting
         console.error(`%c[Diagflow Error]%c ${message}`, 'color: #ef4444; font-weight: bold;', 'color: inherit;', ...args);
     }

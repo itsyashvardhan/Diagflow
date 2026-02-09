@@ -134,10 +134,48 @@ Your mission:
    **BETA DIAGRAM TYPES (Use with care):**
    - \`xychart-beta\` - XY/bar/line charts (see strict rules below)
    - \`sankey-beta\` - Flow/Sankey diagrams
-   - \`block-beta\` - Block diagrams with containers
+   - \`block-beta\` - Block diagrams with containers (see strict rules below)
+
+   **Block Diagram Syntax Rules (CRITICAL for block-beta):**
+   - Use \`block-beta\` as the diagram keyword
+   - **NO \`title\` statement** - block-beta does NOT support titles (unlike flowcharts)
+   - **NO \`accTitle\` or \`accDescr\`** - accessibility metadata not supported
+   - Use \`columns N\` to set the number of columns for layout (e.g., \`columns 6\`)
+   - Block definitions: \`id["Label"]\` or \`id("Label")\` or \`id{{"Label"}}\`
+   - Composite blocks: \`block:compositeId\` followed by indented content and \`end\`
+   - Links between blocks: \`A --> B\` or \`A -- "label" --> B\`
+   - Space blocks for gaps: \`space\` or \`space:N\` (where N is column span)
+   - Block width: \`id["Label"]:N\` where N is column span
+   - Arrow blocks: \`id<["Label"]>(down)\` for directional arrows
+   - Valid example:
+     \`\`\`
+     block-beta
+       columns 3
+       A["Input"] B["Process"] C["Output"]
+       A --> B --> C
+     \`\`\`
+   - Complex example with composite blocks:
+     \`\`\`
+     block-beta
+       columns 5
+       sensor["Camera / Sensor"]:1
+       space
+       block:pipeline:3
+         preprocess["Preprocessing"]
+         encoder["Vision Encoder"]
+         llm["LLM Decoder"]
+       end
+       space
+       output["Text Output"]:1
+       
+       sensor --> preprocess
+       preprocess --> encoder
+       encoder --> llm
+       llm --> output
+     \`\`\`
 
    **XY Chart Syntax Rules (CRITICAL):**
-   - Use \`xychart-beta\` as the diagram type
+   - Use \`xychart-beta\` as the diagram type for SIMPLE bar/line charts only
    - x-axis format: \`x-axis "Label" [val1, val2, val3]\` OR \`x-axis "Label"\` (no type modifiers)
    - y-axis format: \`y-axis "Label" min --> max\` OR \`y-axis "Label"\` (no type modifiers like "logarithmic", "linear", etc.)
    - Do NOT use \`type logarithmic\`, \`type linear\`, or \`min\`/\`max\` as standalone keywords on axes
@@ -153,7 +191,92 @@ Your mission:
        y-axis "Score" 0 --> 100
        bar [85, 72, 91]
      \`\`\`
-   - **If you need labeled scatter plots or complex data visualization, use a flowchart instead** with nodes representing data points
+
+   **ADVANCED CHARTS (Chart.js DSL):**
+   For charts requiring **logarithmic scales, scatter plots, annotations, reference lines, or complex data visualization**, use the Chart.js DSL format instead of xychart-beta.
+
+   **When to use Chart.js DSL:**
+   - Log-log or semi-log graphs
+   - Scatter plots with labeled points
+   - Charts with reference lines (e.g., "threshold", "target", "limit")
+   - Annotations pointing to specific data points
+   - Area/fill charts
+   - Multi-axis comparisons
+
+   **Chart.js DSL Syntax:**
+   \`\`\`chartjs
+   {
+     "type": "line|bar|scatter|area",
+     "title": "Chart Title",
+     "subtitle": "Optional subtitle",
+     "scales": {
+       "x": { "type": "linear|logarithmic|category", "title": "X Axis Label", "min": 0, "max": 100 },
+       "y": { "type": "linear|logarithmic", "title": "Y Axis Label", "min": 0, "max": 100 }
+     },
+     "datasets": [
+       {
+         "label": "Dataset Name",
+         "data": [{"x": 1, "y": 10}, {"x": 2, "y": 20}],
+         "color": "#8b5cf6",
+         "pointRadius": 4,
+         "fill": false
+       }
+     ],
+     "annotations": [
+       {
+         "type": "line",
+         "value": 50,
+         "orientation": "horizontal",
+         "label": "Threshold",
+         "color": "#ef4444",
+         "style": "dashed"
+       },
+       {
+         "type": "point",
+         "x": 25,
+         "y": 45,
+         "label": "Key Point"
+       }
+     ]
+   }
+   \`\`\`
+
+   **Chart.js DSL Example - Log-Log Performance Chart:**
+   \`\`\`chartjs
+   {
+     "type": "scatter",
+     "title": "ResNet vs MobileNet Performance",
+     "subtitle": "Inference time vs model parameters on edge devices",
+     "scales": {
+       "x": { "type": "logarithmic", "title": "Model Parameters (M)" },
+       "y": { "type": "logarithmic", "title": "Inference Time (ms)" }
+     },
+     "datasets": [
+       {
+         "label": "ResNet Family",
+         "data": [{"x": 11.7, "y": 24}, {"x": 25.6, "y": 45}, {"x": 44.5, "y": 78}],
+         "color": "#8b5cf6",
+         "pointRadius": 6
+       },
+       {
+         "label": "MobileNet Family",
+         "data": [{"x": 3.4, "y": 12}, {"x": 5.3, "y": 18}, {"x": 7.8, "y": 25}],
+         "color": "#10b981",
+         "pointRadius": 6
+       }
+     ],
+     "annotations": [
+       {
+         "type": "line",
+         "value": 50,
+         "orientation": "horizontal",
+         "label": "Throttled Bandwidth",
+         "color": "#ef4444",
+         "style": "dashed"
+       }
+     ]
+   }
+   \`\`\`
 
    **Flowchart Syntax Rules (CRITICAL):**
    - Every node referenced in links MUST be defined first (e.g., \`A --> B\` requires both A and B to exist)
@@ -261,7 +384,7 @@ Never leave the user without actionable output.
 ### **Output Template**
 Use ONE of the following formats based on the request type:
 
-**For Diagram Requests** (creating, updating, or explaining diagrams):
+**For Standard Diagram Requests** (flowcharts, sequence diagrams, ER diagrams, etc.):
 
 **Explanation:**
 [Provide a short natural-language description of the diagram and key ideas]
@@ -269,6 +392,16 @@ Use ONE of the following formats based on the request type:
 **Structured Diagram Code:**
 \`\`\`mermaid
 [Provide the raw Mermaid.js code here - no commentary, just the code]
+\`\`\`
+
+**For Advanced Chart Requests** (log scales, scatter plots, annotations, reference lines):
+
+**Explanation:**
+[Provide a short natural-language description of the chart and what it visualizes]
+
+**Structured Diagram Code:**
+\`\`\`chartjs
+[Provide the raw Chart.js DSL JSON here - valid JSON only, no comments]
 \`\`\`
 
 **For Conversational Requests** (greetings, capability questions, or refusals):
@@ -524,9 +657,18 @@ function parseDiagramResponse(text: string): DiagramResponse {
   }
 
   // Extract mermaid code
-  const codeMatch = text.match(/```mermaid\s*([\s\S]*?)```/i);
-  if (codeMatch) {
-    sections.code = codeMatch[1].trim();
+  const mermaidMatch = text.match(/```mermaid\s*([\s\S]*?)```/i);
+  if (mermaidMatch) {
+    sections.code = mermaidMatch[1].trim();
+  }
+
+  // Extract Chart.js DSL code (if mermaid not found)
+  if (!sections.code) {
+    const chartjsMatch = text.match(/```chartjs\s*([\s\S]*?)```/i);
+    if (chartjsMatch) {
+      // Wrap the JSON in chartjs tags for the renderer to detect
+      sections.code = `chartjs\n${chartjsMatch[1].trim()}`;
+    }
   }
 
   // Handle conversational responses (no diagram structure)

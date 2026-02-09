@@ -19,7 +19,7 @@ export function ZoomControls({
 }: ZoomControlsProps) {
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="glass-panel p-1 flex items-center gap-0.5 rounded-full shadow-lg">
+      <div className="glass-panel p-1 flex items-center gap-0.5 rounded-full shadow-lg" role="toolbar" aria-label="Zoom controls">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -28,6 +28,7 @@ export function ZoomControls({
               onClick={onZoomOut}
               disabled={zoom <= 0.1}
               className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
+              aria-label="Zoom out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </Button>
@@ -43,6 +44,7 @@ export function ZoomControls({
               variant="ghost"
               onClick={onZoomReset}
               className="h-8 px-3 min-w-[3.5rem] text-[11px] font-bold rounded-full hover:bg-white/10 transition-colors tracking-tight"
+              aria-label={`Reset zoom, currently ${Math.round(zoom * 100)}%`}
             >
               {Math.round(zoom * 100)}%
             </Button>
@@ -60,6 +62,7 @@ export function ZoomControls({
               onClick={onZoomIn}
               disabled={zoom >= 5}
               className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
+              aria-label="Zoom in"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </Button>
@@ -79,6 +82,7 @@ export function ZoomControls({
                   variant="ghost"
                   onClick={onFitToScreen}
                   className="h-8 w-8 rounded-full hover:bg-white/10 transition-colors"
+                  aria-label="Fit diagram to screen"
                 >
                   <Maximize className="w-3.5 h-3.5" />
                 </Button>

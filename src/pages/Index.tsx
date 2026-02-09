@@ -31,14 +31,17 @@ import {
   Workflow,
   RotateCcw,
 } from "lucide-react";
-import { Github, Share2 } from "lucide-react";
+import { Github, Share2, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 import { CreditsModal } from "@/components/modals/CreditsModal";
 import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
 import { StarterPrompts, QuickTips } from "@/components/onboarding/StarterContent";
+import { useCanonical } from "@/hooks/use-canonical";
 
 const Index = () => {
   // Get share ID from URL params (for /d/:shareId route)
   const { shareId } = useParams<{ shareId?: string }>();
+  useCanonical("/app");
 
   // State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -88,8 +91,12 @@ const Index = () => {
     latestWidthRef.current = chatWidth;
     try {
       localStorage.setItem("diagflow:chatWidth", String(chatWidth));
-    } catch { }
+    } catch (_e) { /* localStorage may be unavailable */ }
   }, [chatWidth]);
+
+  useEffect(() => {
+    document.title = "Diagflow — Intelligent Diagram Builder";
+  }, []);
 
   useEffect(() => {
     // Ensure saved width doesn't exceed 40% when window resizes
@@ -162,8 +169,40 @@ const Index = () => {
   }, []);
   const [showShare, setShowShare] = useState(false);
 
+  // Mobile drawer state - which view is active on mobile
+  const [mobileView, setMobileView] = useState<'chat' | 'canvas'>('chat');
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Swipe gesture handling for mobile
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobile) return;
+
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50; // Minimum distance for a swipe
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        // Swiped left - show canvas
+        setMobileView('canvas');
+      } else {
+        // Swiped right - show chat
+        setMobileView('chat');
+      }
+    }
+  };
 
   // Load from storage on mount
   useEffect(() => {
@@ -185,12 +224,12 @@ const Index = () => {
   useEffect(() => {
     const loadSharedData = async () => {
       if (shareId) {
-        console.log("Loading shared diagram with ID:", shareId);
+        logger.info("Loading shared diagram with ID: " + shareId);
         setIsGenerating(true);
         try {
           const shared = await getSharedDiagram(shareId);
           if (shared) {
-            console.log("Shared diagram loaded successfully:", { id: shared.id, title: shared.title });
+            logger.info("Shared diagram loaded successfully", { id: shared.id, title: shared.title });
             setCurrentDiagram(shared.code);
             // Optionally add a system message explaining this is a shared diagram
             setMessages(prev => [
@@ -207,7 +246,7 @@ const Index = () => {
               description: `Viewing: ${shared.title || "Shared Diagram"}`,
             });
           } else {
-            console.warn("Shared diagram not found:", shareId);
+            logger.warn("Shared diagram not found: " + shareId);
             toast({
               title: "Diagram Not Found",
               description: "The shared diagram link might be invalid or expired. Check the console for details.",
@@ -217,7 +256,6 @@ const Index = () => {
         } catch (error) {
           logger.error("Error loading shared diagram", error);
           const errorMessage = error instanceof Error ? error.message : "Unknown error";
-          console.error("Shared diagram loading failed:", { shareId, error, errorMessage });
           toast({
             title: "Error Loading Shared Diagram",
             description: `Failed to load: ${errorMessage}. Check browser console for details.`,
@@ -231,6 +269,7 @@ const Index = () => {
       }
     };
     loadSharedData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareId]);
 
   // Scroll to bottom on new messages
@@ -282,6 +321,7 @@ const Index = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyIndex, diagramHistory]);
 
   const handleSendMessage = async (content: string, attachments: Attachment[] = []) => {
@@ -563,55 +603,63 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Skip to content - Accessibility */}
+      <a
+        href="#app-workspace"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:text-sm focus:font-medium"
+      >
+        Skip to workspace
+      </a>
+
       {/* Gradient Background */}
       <div className="fixed inset-0 pointer-events-none" style={{ background: "var(--gradient-background)" }} />
 
-      {/* Header */}
-      <header className="relative z-20 premium-blur border-b border-white/5 px-6 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 group cursor-default">
+      {/* Header - Hybrid Layout: Logo Left | Nav Center | Utils Right */}
+      <header className="relative z-20 premium-blur border-b border-white/5 px-4 sm:px-6 py-3">
+        <div className="relative flex items-center justify-between">
+          {/* Left: Logo & Brand */}
+          <div className="flex items-center gap-3 group cursor-default shrink-0 z-10">
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
-              <DiagflowLogo className="relative w-9 h-9 shadow-lg shadow-primary/20" />
+              <DiagflowLogo className="relative w-8 h-8 sm:w-9 sm:h-9 shadow-lg shadow-primary/20" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight gradient-text">Diagflow</h1>
-            </div>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight gradient-text hidden xs:block">Diagflow</h1>
           </div>
 
-          <div className="flex items-center gap-1.5 px-1.5 py-1 glass-panel rounded-full shadow-inner max-w-[calc(100vw-48px)] overflow-x-auto no-scrollbar">
+          {/* Center: Navigation Pill (absolutely positioned for true center) */}
+          <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1.5 px-1.5 py-1 glass-panel rounded-full shadow-inner">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowHistory(true)}
-              className="h-8 rounded-full px-3 sm:px-4 hover:bg-white/5 transition-all shrink-0"
+              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <History className="w-3.5 h-3.5 sm:mr-2 opacity-70" />
-              <span className="text-xs font-medium hidden sm:inline">History</span>
+              <History className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden lg:inline">History</span>
             </Button>
 
-            <div className="hidden sm:block w-px h-4 bg-white/10 mx-0.5" />
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowExamples(true)}
-              className="h-8 rounded-full px-3 sm:px-4 hover:bg-white/5 transition-all shrink-0"
+              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <Sparkles className="w-3.5 h-3.5 sm:mr-2 opacity-70" />
-              <span className="text-xs font-medium hidden sm:inline">Examples</span>
+              <Sparkles className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden lg:inline">Examples</span>
             </Button>
 
-            <div className="hidden sm:block w-px h-4 bg-white/10 mx-0.5" />
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowSettings(true)}
-              className="h-8 rounded-full px-3 sm:px-4 hover:bg-white/5 transition-all shrink-0"
+              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <Settings className="w-3.5 h-3.5 sm:mr-2 opacity-70" />
-              <span className="text-xs font-medium hidden sm:inline">Settings</span>
+              <Settings className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden lg:inline">Settings</span>
             </Button>
 
             <div className="w-px h-4 bg-white/10 mx-0.5" />
@@ -620,61 +668,124 @@ const Index = () => {
               variant="ghost"
               size="sm"
               onClick={() => setShowShare(true)}
-              className="h-8 rounded-full px-3 sm:px-4 hover:bg-white/5 transition-all text-primary shrink-0"
+              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all text-primary shrink-0"
             >
-              <Share2 className="w-3.5 h-3.5 sm:mr-2" />
-              <span className="text-xs font-medium hidden sm:inline">Share</span>
+              <Share2 className="w-3.5 h-3.5 lg:mr-2" />
+              <span className="text-xs font-medium hidden lg:inline">Share</span>
             </Button>
 
             <div className="w-px h-4 bg-white/10 mx-0.5" />
 
-            <div className="flex items-center gap-1 ml-1 shrink-0">
+            <Link to="/docs">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
+              >
+                <BookOpen className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
+                <span className="text-xs font-medium hidden lg:inline">Docs</span>
+              </Button>
+            </Link>
+          </div>
+
+          {/* Right: Utility Icons */}
+          <div className="flex items-center gap-1 shrink-0 z-10">
+            {/* Mobile-only: Compact nav buttons */}
+            <div className="flex md:hidden items-center gap-0.5 mr-1">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setShowHelp(true)}
+                onClick={() => setShowHistory(true)}
                 className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
-                title="Help Guide"
+                title="History"
               >
-                <HelpCircle className="w-3.5 h-3.5 opacity-70" />
+                <History className="w-3.5 h-3.5 opacity-70" />
               </Button>
-
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setShowCredits(true)}
-                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all text-muted-foreground/50 hover:text-foreground"
-                title="Credits & GitHub"
+                onClick={() => setShowExamples(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+                title="Examples"
               >
-                <Github className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 opacity-70" />
               </Button>
-
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={toggleFullscreen}
-                className="hidden sm:inline-flex w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+                onClick={() => setShowSettings(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+                title="Settings"
               >
-                {isFullscreen ? (
-                  <Minimize2 className="w-3.5 h-3.5 opacity-70" />
-                ) : (
-                  <Maximize2 className="w-3.5 h-3.5 opacity-70" />
-                )}
+                <Settings className="w-3.5 h-3.5 opacity-70" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowShare(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all text-primary"
+                title="Share"
+              >
+                <Share2 className="w-3.5 h-3.5" />
               </Button>
             </div>
+
+            <div className="hidden sm:block w-px h-4 bg-white/10 mx-1" />
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowHelp(true)}
+              className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+              title="Help Guide"
+            >
+              <HelpCircle className="w-3.5 h-3.5 opacity-70" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowCredits(true)}
+              className="w-8 h-8 rounded-full hover:bg-white/5 transition-all text-muted-foreground/50 hover:text-foreground"
+              title="Credits & GitHub"
+            >
+              <Github className="w-3.5 h-3.5" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleFullscreen}
+              className="hidden sm:inline-flex w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+              title="Toggle Fullscreen"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5 opacity-70" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5 opacity-70" />
+              )}
+            </Button>
           </div>
         </div>
       </header>
 
-      <div className="relative z-10 flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div
+        className="relative z-10 flex-1 flex flex-col lg:flex-row overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        id="app-workspace"
+        role="main"
+        aria-label="Diagram workspace"
+      >
         {/* Chat Column (resizable) */}
         <div
           style={{
             width: isMobile ? '100%' : `${chatWidth}px`,
-            maxHeight: isMobile ? '45%' : 'none',
-            minWidth: isMobile ? '100%' : '320px'
+            minWidth: isMobile ? '100%' : '320px',
+            display: isMobile && mobileView !== 'chat' ? 'none' : 'flex'
           }}
-          className="flex flex-col border-b lg:border-b-0 lg:border-r border-white/5 shrink-0 transition-[width,max-height] duration-300"
+          className="flex-col border-b lg:border-b-0 lg:border-r border-white/5 shrink-0 transition-[width] duration-300"
         >
           <div className="flex items-center justify-between px-6 py-3 lg:py-4 border-b border-white/5">
             <div className="flex flex-col">
@@ -753,7 +864,12 @@ const Index = () => {
         </div>
 
         {/* Diagram Column */}
-        <div className="flex-1 flex flex-col relative bg-muted/10">
+        <div
+          className="flex-1 flex flex-col relative bg-muted/10"
+          style={{
+            display: isMobile && mobileView !== 'canvas' ? 'none' : 'flex'
+          }}
+        >
           {/* Floating Controls Overlay */}
           <div className="absolute top-3 lg:top-6 left-3 lg:left-6 right-3 lg:right-6 z-10 flex flex-col lg:flex-row items-end lg:items-center justify-between pointer-events-none gap-2">
             <div className="pointer-events-auto">
@@ -791,6 +907,32 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Tab Bar */}
+      {isMobile && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-white/5 bg-background/95 backdrop-blur-lg safe-area-inset-bottom">
+          <button
+            onClick={() => setMobileView('chat')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors flex flex-col items-center gap-1 ${mobileView === 'chat'
+              ? 'text-primary'
+              : 'text-muted-foreground'
+              }`}
+          >
+            <Workflow className="w-5 h-5" />
+            <span className="text-xs">Chat</span>
+          </button>
+          <button
+            onClick={() => setMobileView('canvas')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors flex flex-col items-center gap-1 ${mobileView === 'canvas'
+              ? 'text-primary'
+              : 'text-muted-foreground'
+              }`}
+          >
+            <Sparkles className="w-5 h-5" />
+            <span className="text-xs">Canvas</span>
+          </button>
+        </div>
+      )}
 
       {/* Modals */}
       <SettingsModal

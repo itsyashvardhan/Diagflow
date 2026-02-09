@@ -4,6 +4,8 @@
  * that the AI might generate incorrectly.
  */
 
+import { isChartJSDSL } from './chartDSL';
+
 export interface SanitizationResult {
     code: string;
     wasModified: boolean;
@@ -13,9 +15,14 @@ export interface SanitizationResult {
 }
 
 /**
- * Detect the diagram type from Mermaid code
+ * Detect the diagram type from Mermaid code or Chart.js DSL
  */
 export function detectDiagramType(code: string): string | null {
+    // First, check if it's a Chart.js DSL definition
+    if (isChartJSDSL(code)) {
+        return 'chartjs';
+    }
+
     const trimmed = code.trim().toLowerCase();
 
     const typePatterns: [RegExp, string][] = [
@@ -157,6 +164,46 @@ function sanitizeStateDiagram(code: string): { code: string; fixes: string[] } {
 }
 
 /**
+ * Sanitize block diagram (block-beta) specific issues
+ * Note: block-beta does NOT support 'title', 'accTitle', 'accDescr' like other diagrams
+ */
+function sanitizeBlockDiagram(code: string): { code: string; fixes: string[] } {
+    const fixes: string[] = [];
+    let result = code;
+
+    // Fix 1: Remove unsupported 'title' statements (block-beta doesn't support titles)
+    // The title keyword is not part of block-beta grammar
+    const titleRegex = /^\s*title\s+["'][^"']*["']\s*$/gm;
+    if (titleRegex.test(result)) {
+        result = result.replace(titleRegex, '%% Title removed (not supported in block-beta)');
+        fixes.push('Removed unsupported title statement from block diagram');
+    }
+
+    // Fix 2: Remove accTitle and accDescr (accessibility metadata not supported in block-beta)
+    const accTitleRegex = /^\s*accTitle\s*:\s*.*$/gm;
+    const accDescrRegex = /^\s*accDescr\s*(\{[^}]*\}|:\s*.*)$/gm;
+    if (accTitleRegex.test(result)) {
+        result = result.replace(accTitleRegex, '');
+        fixes.push('Removed unsupported accTitle from block diagram');
+    }
+    if (accDescrRegex.test(result)) {
+        result = result.replace(accDescrRegex, '');
+        fixes.push('Removed unsupported accDescr from block diagram');
+    }
+
+    // Fix 3: Ensure proper block ID formatting (no spaces in IDs)
+    // Block IDs should be alphanumeric or use quotes for labels
+    const invalidBlockIdRegex = /^(\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/gm;
+    // This catches lines like "block name" which should be "block[\"name\"]"
+    // Skip this for now as it's complex to auto-fix without context
+
+    // Fix 4: Clean up empty lines that might have been left by removals
+    result = result.replace(/\n{3,}/g, '\n\n');
+
+    return { code: result, fixes };
+}
+
+/**
  * General sanitization for all diagram types
  */
 function sanitizeGeneral(code: string): { code: string; fixes: string[] } {
@@ -214,23 +261,33 @@ export function sanitizeDiagram(code: string): SanitizationResult {
 
     // Step 3: Type-specific sanitization
     switch (diagramType) {
-        case 'xychart':
+        case 'xychart': {
             const xyResult = sanitizeXYChart(result);
             result = xyResult.code;
             allFixes.push(...xyResult.fixes);
             break;
+        }
 
-        case 'flowchart':
+        case 'flowchart': {
             const flowResult = sanitizeFlowchart(result);
             result = flowResult.code;
             allFixes.push(...flowResult.fixes);
             break;
+        }
 
-        case 'state':
+        case 'state': {
             const stateResult = sanitizeStateDiagram(result);
             result = stateResult.code;
             allFixes.push(...stateResult.fixes);
             break;
+        }
+
+        case 'block': {
+            const blockResult = sanitizeBlockDiagram(result);
+            result = blockResult.code;
+            allFixes.push(...blockResult.fixes);
+            break;
+        }
 
         // Add more type-specific handlers as needed
     }
@@ -272,8 +329,8 @@ export function validateDiagramSyntax(code: string): { valid: boolean; issues: s
     // Flowchart validation
     if (diagramType === 'flowchart') {
         // Check for undefined nodes (basic check)
-        const nodeDefinitions = code.match(/([A-Za-z_][A-Za-z0-9_]*)\s*[\[\(\{<]/g) || [];
-        const definedNodes = new Set(nodeDefinitions.map(n => n.replace(/[\[\(\{<\s]/g, '')));
+        const nodeDefinitions = code.match(/([A-Za-z_][A-Za-z0-9_]*)\s*[[({<]/g) || [];
+        const definedNodes = new Set(nodeDefinitions.map(n => n.replace(/[[({<\s]/g, '')));
 
         const nodeReferences = code.match(/--[->|.]+\s*([A-Za-z_][A-Za-z0-9_]*)/g) || [];
         for (const ref of nodeReferences) {
@@ -313,6 +370,7 @@ export function getDiagramTypeLabel(type: string | null): string {
         packet: 'Packet Diagram',
         architecture: 'Architecture Diagram',
         kanban: 'Kanban Board',
+        chartjs: 'Advanced Chart',
     };
 
     return type ? labels[type] || type : 'Unknown';

@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { renderDiagram, clearDiagram } from "@/lib/mermaid";
-import { sanitizeDiagram, getDiagramTypeLabel } from "@/lib/diagramSanitizer";
+import { sanitizeDiagram, getDiagramTypeLabel, detectDiagramType } from "@/lib/diagramSanitizer";
 import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
 import { logger } from "@/lib/logger";
 import { MermaidTheme } from "@/types/diagflow";
 import { AlertCircle, RefreshCw, Code, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { ChartRenderer } from "./ChartRenderer";
 
 interface DiagramViewerProps {
   code: string;
@@ -291,11 +292,21 @@ function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom,
   );
 }
 
-// Wrapper component with ErrorBoundary
+// Wrapper component with ErrorBoundary and renderer routing
 export function DiagramViewer(props: DiagramViewerProps) {
   const handleError = (error: Error) => {
     logger.error("DiagramViewer ErrorBoundary caught", error);
   };
+
+  // Detect if this is a Chart.js DSL or Mermaid diagram
+  const isChartJS = useMemo(() => {
+    if (!props.code) return false;
+    const type = detectDiagramType(props.code);
+    return type === 'chartjs';
+  }, [props.code]);
+
+  // Map MermaidTheme to ChartRenderer theme
+  const chartTheme = props.theme === 'dark' ? 'dark' : 'light';
 
   return (
     <ErrorBoundary
@@ -322,7 +333,15 @@ export function DiagramViewer(props: DiagramViewerProps) {
         </div>
       }
     >
-      <DiagramViewerInternal {...props} />
+      {isChartJS ? (
+        <ChartRenderer
+          code={props.code}
+          theme={chartTheme}
+          zoom={props.zoom}
+        />
+      ) : (
+        <DiagramViewerInternal {...props} />
+      )}
     </ErrorBoundary>
   );
 }
