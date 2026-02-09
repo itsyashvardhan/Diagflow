@@ -426,7 +426,7 @@ const LandingPage = () => {
           {/* Credits */}
           <p className={`text-sm flex items-center gap-1 ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
             Designed with <span className={`mx-1 font-medium ${isDark ? 'text-white' : 'text-[#111]'}`}>Precision</span> by{" "}
-            <a href="https://github.com/itsyashvardhangoogl" target="_blank" rel="noopener noreferrer" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`}>
+            <a href="https://github.com/itsyashvardhan" target="_blank" rel="noopener noreferrer" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`}>
               @itsyashvardhan
             </a>
           </p>
