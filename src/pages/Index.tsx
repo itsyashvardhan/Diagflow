@@ -28,7 +28,7 @@ import {
   HelpCircle,
   Maximize2,
   Minimize2,
-  Workflow,
+  MessageCircle,
   RotateCcw,
 } from "lucide-react";
 import { Github, Share2, BookOpen } from "lucide-react";
@@ -238,7 +238,7 @@ const Index = () => {
                 id: Date.now().toString(),
                 role: "assistant",
                 content: `You're viewing a shared diagram: **${shared.title || "Untitled"}**`,
-                timestamp: new Date().toISOString()
+                timestamp: Date.now()
               }
             ]);
             toast({
@@ -785,7 +785,7 @@ const Index = () => {
             minWidth: isMobile ? '100%' : '320px',
             display: isMobile && mobileView !== 'chat' ? 'none' : 'flex'
           }}
-          className="flex-col border-b lg:border-b-0 lg:border-r border-white/5 shrink-0 transition-[width] duration-300"
+          className={`flex-col border-b lg:border-b-0 lg:border-r border-white/5 shrink-0 transition-[width] duration-300 ${isMobile ? 'pb-[60px]' : ''}`}
         >
           <div className="flex items-center justify-between px-6 py-3 lg:py-4 border-b border-white/5">
             <div className="flex flex-col">
@@ -838,7 +838,7 @@ const Index = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 lg:p-6 border-t border-white/5 bg-black/5">
+          <div className="p-3 lg:p-6 border-t border-white/5 bg-black/5">
             <ChatInput
               onSend={handleSendMessage}
               onShowExamples={() => setShowExamples(true)}
@@ -918,7 +918,7 @@ const Index = () => {
               : 'text-muted-foreground'
               }`}
           >
-            <Workflow className="w-5 h-5" />
+            <MessageCircle className="w-5 h-5" />
             <span className="text-xs">Chat</span>
           </button>
           <button

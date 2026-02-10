@@ -2,8 +2,8 @@
 import React from 'react';
 
 interface DiagfloLogoProps {
-    className?: string; // e.g. "w-8 h-8"
-    variant?: 'default' | 'solid'; // 'default' is transparent/icon-only, 'solid' has the background
+    className?: string;
+    variant?: 'default' | 'solid';
 }
 
 export const DiagfloLogo: React.FC<DiagfloLogoProps> = ({ className = "w-8 h-8", variant = 'default' }) => {
@@ -21,9 +21,9 @@ export const DiagfloLogo: React.FC<DiagfloLogoProps> = ({ className = "w-8 h-8",
         >
             <defs>
                 <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#f97316" /> {/* Orange-500 */}
-                    <stop offset="50%" stopColor="#f59e0b" /> {/* Amber-500 */}
-                    <stop offset="100%" stopColor="#fbbf24" /> {/* Amber-400 */}
+                    <stop offset="0%" stopColor="#f97316" />
+                    <stop offset="50%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#fbbf24" />
                 </linearGradient>
                 <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur stdDeviation="3" result="blur" />
@@ -43,16 +43,15 @@ export const DiagfloLogo: React.FC<DiagfloLogoProps> = ({ className = "w-8 h-8",
                 />
             )}
 
-            {/* The Symbol - Pure & Reductive */}
+            {/* The Symbol */}
             <g
                 transform={variant === 'solid' ? "translate(0,0)" : "scale(1.1) translate(-3,-3)"}
             >
-                {/* Main Arc - The only necessary form */}
                 {/* Vertical input line */}
                 <path
                     d="M22 17 V47"
                     stroke={variant === 'solid' ? "white" : `url(#${gradId})`}
-                    strokeWidth="6" /* Bumped weight for impact */
+                    strokeWidth="6"
                     strokeLinecap="round"
                 />
 
@@ -60,13 +59,13 @@ export const DiagfloLogo: React.FC<DiagfloLogoProps> = ({ className = "w-8 h-8",
                 <path
                     d="M22 17 H32 C43 17 47 25 47 32 C47 39 43 47 32 47 H22"
                     stroke={variant === 'solid' ? "white" : `url(#${gradId})`}
-                    strokeWidth="6" /* Bumped weight for impact */
+                    strokeWidth="6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     fill="none"
                 />
 
-                {/* The Node - The destination */}
+                {/* The Node */}
                 <circle
                     cx="47"
                     cy="32"
