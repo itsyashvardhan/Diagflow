@@ -1,12 +1,12 @@
-import { Message, DiagramHistoryEntry, AppSettings } from "@/types/diagflow";
+import { Message, DiagramHistoryEntry, AppSettings } from "@/types/diagflo";
 
 const STORAGE_KEYS = {
-  CHAT_HISTORY: "diagflow_chat_history",
-  DIAGRAM_HISTORY: "diagflow_diagram_history",
-  SETTINGS: "diagflow_settings",
-  API_KEY: "diagflow_api_key",
-  CURRENT_DIAGRAM: "diagflow_current_diagram",
-  HISTORY_INDEX: "diagflow_history_index",
+  CHAT_HISTORY: "diagflo_chat_history",
+  DIAGRAM_HISTORY: "diagflo_diagram_history",
+  SETTINGS: "diagflo_settings",
+  API_KEY: "diagflo_api_key",
+  CURRENT_DIAGRAM: "diagflo_current_diagram",
+  HISTORY_INDEX: "diagflo_history_index",
 } as const;
 
 export const storage = {

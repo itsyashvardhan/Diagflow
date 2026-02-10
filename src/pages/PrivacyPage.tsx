@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCanonical } from "@/hooks/use-canonical";
-import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 import { ArrowLeft } from "lucide-react";
 
 const PrivacyPage = () => {
@@ -9,7 +9,7 @@ const PrivacyPage = () => {
   useCanonical("/privacy");
 
   useEffect(() => {
-    document.title = "Privacy Policy | Diagflow";
+    document.title = "Privacy Policy | Diagflo";
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
@@ -26,9 +26,9 @@ const PrivacyPage = () => {
       <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? "bg-black/60 border-white/10" : "bg-white/60 border-black/5"}`}>
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <DiagflowLogo className="w-7 h-7" />
+            <DiagfloLogo className="w-7 h-7" />
             <span className="font-semibold text-[15px] bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-              Diagflow
+              Diagflo
             </span>
           </Link>
           <Link
@@ -51,14 +51,14 @@ const PrivacyPage = () => {
 
         <Section title="Overview">
           <p>
-            Diagflow ("we", "our", "the app") is a client-side web application for Intelligent diagram generation.
+            Diagflo ("we", "our", "the app") is a client-side web application for Intelligent diagram generation.
             We are committed to protecting your privacy. This policy explains what data we collect, how we use it,
             and your rights.
           </p>
         </Section>
 
         <Section title="Data We Collect">
-          <p><strong>API Keys.</strong> Your Gemini API key is stored exclusively in your browser's localStorage. It is never transmitted to Diagflow's servers — requests go directly from your browser to Google's Gemini API.</p>
+          <p><strong>API Keys.</strong> Your Gemini API key is stored exclusively in your browser's localStorage. It is never transmitted to Diagflo's servers — requests go directly from your browser to Google's Gemini API.</p>
           <p><strong>Shared Diagrams.</strong> When you choose to share a diagram, the diagram code and title are stored in our Supabase database. No personal data, API keys, or chat history is included in shared diagrams.</p>
           <p><strong>Waitlist Emails.</strong> If you join our premium waitlist, your email address is stored in Supabase. We use it solely to notify you about premium feature availability.</p>
           <p><strong>Analytics.</strong> We use Vercel Analytics, which collects anonymous, aggregated page-view data. No cookies are set, and no personal information is tracked.</p>
@@ -76,7 +76,7 @@ const PrivacyPage = () => {
         </Section>
 
         <Section title="Third-Party Services">
-          <p>Diagflow integrates with the following third-party services:</p>
+          <p>Diagflo integrates with the following third-party services:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>Google Gemini API</strong> — Diagram generation. Governed by <a href="https://ai.google.dev/terms" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">Google's Terms of Service</a>.</li>
             <li><strong>Supabase</strong> — Shared diagram storage and waitlist.</li>

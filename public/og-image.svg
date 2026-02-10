@@ -59,7 +59,7 @@
     <line x1="1050" y1="460" x2="1120" y2="530" stroke="#8b5cf6" stroke-width="1.5" />
   </g>
 
-  <!-- Diagflow Logo (centered, large) -->
+  <!-- Diagflo Logo (centered, large) -->
   <g transform="translate(520, 110) scale(2.4)" filter="url(#logo-glow)">
     <g transform="scale(1.1) translate(-3,-3)">
       <path d="M22 17 V47" stroke="url(#logo-grad)" stroke-width="6" stroke-linecap="round" />
@@ -70,7 +70,7 @@
 
   <!-- Brand name -->
   <text x="600" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="800" fill="#ffffff" text-anchor="middle" filter="url(#text-glow)" letter-spacing="-2">
-    Diagflow
+    Diagflo
   </text>
 
   <!-- Tagline -->

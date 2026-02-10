@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { DiagramHistoryEntry } from "@/types/diagflow";
+import { DiagramHistoryEntry } from "@/types/diagflo";
 import { Clock, RotateCcw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 

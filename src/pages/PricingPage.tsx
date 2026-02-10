@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 import { Sparkles, Zap, Building2, Crown, Lock } from "lucide-react";
 import { useCanonical } from "@/hooks/use-canonical";
 import { supabase } from "@/lib/supabase";
@@ -10,7 +10,7 @@ const PricingPage = () => {
     useCanonical("/pricing");
 
     useEffect(() => {
-        document.title = "Pricing | Diagflow";
+        document.title = "Pricing | Diagflo";
         setIsDark(document.documentElement.classList.contains("dark"));
     }, []);
 
@@ -80,8 +80,8 @@ const PricingPage = () => {
             <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? 'bg-black/60 border-white/10' : 'bg-white/60 border-black/5'}`}>
                 <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <DiagflowLogo className="w-7 h-7" />
-                        <span className="font-semibold text-[15px] bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflow</span>
+                        <DiagfloLogo className="w-7 h-7" />
+                        <span className="font-semibold text-[15px] bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflo</span>
                     </Link>
 
                     <div className="flex items-center gap-4">
@@ -214,7 +214,7 @@ const PricingPage = () => {
                         to="/app"
                         className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:opacity-90 transition-all shadow-lg shadow-orange-500/25"
                     >
-                        Open Diagflow
+                        Open Diagflo
                         <span className="material-symbols-outlined text-base">arrow_forward</span>
                     </Link>
                 </div>
@@ -268,11 +268,11 @@ const PricingPage = () => {
             <footer className={`py-8 border-t ${isDark ? 'border-white/5' : 'border-black/5'}`}>
                 <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <DiagflowLogo className="w-6 h-6" />
-                        <span className="text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflow</span>
+                        <DiagfloLogo className="w-6 h-6" />
+                        <span className="text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflo</span>
                     </div>
                     <p className={`text-xs ${isDark ? 'text-white/30' : 'text-black/30'}`}>
-                        © 2026 Diagflow. All rights reserved.
+                        © 2026 Diagflo. All rights reserved.
                     </p>
                     <div className={`flex items-center gap-4 text-xs ${isDark ? 'text-white/30' : 'text-black/30'}`}>
                         <Link to="/privacy" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Privacy</Link>

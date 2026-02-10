@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { renderDiagram, clearDiagram } from "@/lib/mermaid";
 import { sanitizeDiagram, getDiagramTypeLabel, detectDiagramType } from "@/lib/diagramSanitizer";
-import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 import { logger } from "@/lib/logger";
-import { MermaidTheme } from "@/types/diagflow";
+import { MermaidTheme } from "@/types/diagflo";
 import { AlertCircle, RefreshCw, Code, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -263,7 +263,7 @@ function DiagramViewerInternal({ code, theme = "default", zoom = 1, onWheelZoom,
 
             {/* Logo - Foreground */}
             <div className="relative z-10 p-6 rounded-3xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 shadow-2xl backdrop-blur-sm">
-              <DiagflowLogo className="w-16 h-16 opacity-80" />
+              <DiagfloLogo className="w-16 h-16 opacity-80" />
             </div>
           </div>
 

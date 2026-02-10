@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCanonical } from "@/hooks/use-canonical";
-import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 import {
   BookOpen,
   Zap,
@@ -27,7 +27,7 @@ const DocsPage = () => {
   useCanonical("/docs");
 
   useEffect(() => {
-    document.title = "Documentation | Diagflow";
+    document.title = "Documentation | Diagflo";
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
@@ -110,9 +110,9 @@ const DocsPage = () => {
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2.5">
-              <DiagflowLogo className="w-7 h-7" />
+              <DiagfloLogo className="w-7 h-7" />
               <span className="font-semibold text-[15px] bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-                Diagflow
+                Diagflo
               </span>
             </Link>
             <div className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${isDark ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" : "bg-orange-50 text-orange-600 border border-orange-200"}`}>
@@ -253,7 +253,7 @@ const DocsPage = () => {
               Documentation
             </h1>
             <p className={`text-lg leading-relaxed max-w-2xl ${isDark ? "text-white/50" : "text-black/50"}`}>
-              Everything you need to create stunning diagrams and charts with Diagflow's Intelligent builder.
+              Everything you need to create stunning diagrams and charts with Diagflo's Intelligent builder.
             </p>
           </div>
 
@@ -263,7 +263,7 @@ const DocsPage = () => {
               Getting Started
             </h2>
             <p className={`leading-relaxed mb-6 ${isDark ? "text-white/60" : "text-black/60"}`}>
-              Diagflow turns natural language into professional diagrams. Describe what you want to visualize, and <strong className={isDark ? "text-orange-400" : "text-orange-600"}>Archie</strong> — our AI builder — generates it in seconds.
+              Diagflo turns natural language into professional diagrams. Describe what you want to visualize, and <strong className={isDark ? "text-orange-400" : "text-orange-600"}>Archie</strong> — our AI builder — generates it in seconds.
             </p>
             <div className={`rounded-xl border p-6 ${isDark ? "bg-white/[0.02] border-white/10" : "bg-gray-50 border-gray-200"}`}>
               <h3 className={`text-base font-semibold mb-4 ${isDark ? "text-white" : "text-black"}`}>Quick Start</h3>
@@ -274,7 +274,7 @@ const DocsPage = () => {
                 </li>
                 <li className="flex gap-3">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 text-white text-xs font-bold shrink-0">2</span>
-                  <span>Open <Link to="/app" className="text-orange-500 hover:underline">Diagflow App</Link> and go to <strong>Settings</strong> → paste your API key</span>
+                  <span>Open <Link to="/app" className="text-orange-500 hover:underline">Diagflo App</Link> and go to <strong>Settings</strong> → paste your API key</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 text-white text-xs font-bold shrink-0">3</span>
@@ -290,7 +290,7 @@ const DocsPage = () => {
               API Key Setup
             </h2>
             <p className={`leading-relaxed mb-4 ${isDark ? "text-white/60" : "text-black/60"}`}>
-              Diagflow uses Google's <strong>Gemini</strong> AI model. You need a free API key to generate diagrams.
+              Diagflo uses Google's <strong>Gemini</strong> AI model. You need a free API key to generate diagrams.
             </p>
             <div className={`rounded-xl border p-6 mb-6 ${isDark ? "bg-white/[0.02] border-white/10" : "bg-gray-50 border-gray-200"}`}>
               <h3 className={`text-base font-semibold mb-3 ${isDark ? "text-white" : "text-black"}`}>How to get your API key</h3>
@@ -298,13 +298,13 @@ const DocsPage = () => {
                 <li>1. Visit <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">aistudio.google.com/apikey</a></li>
                 <li>2. Sign in with your Google account</li>
                 <li>3. Click <strong>"Create API Key"</strong></li>
-                <li>4. Copy the key and paste it in Diagflow's Settings panel</li>
+                <li>4. Copy the key and paste it in Diagflo's Settings panel</li>
               </ol>
             </div>
             <div className={`flex items-start gap-3 rounded-xl border p-4 ${isDark ? "bg-green-500/5 border-green-500/20" : "bg-green-50 border-green-200"}`}>
               <span className="material-symbols-outlined text-green-500 text-lg mt-0.5">verified_user</span>
               <p className={`text-[15px] leading-relaxed ${isDark ? "text-green-400/80" : "text-green-700"}`}>
-                <strong>Your key stays local.</strong> It's stored only in your browser's localStorage and sent directly to Google's API. Diagflow never sees or stores your key on any server.
+                <strong>Your key stays local.</strong> It's stored only in your browser's localStorage and sent directly to Google's API. Diagflo never sees or stores your key on any server.
               </p>
             </div>
           </section>
@@ -362,7 +362,7 @@ Archie: [adds error handling branches]`}
               Supported Diagram Types
             </h2>
             <p className={`leading-relaxed mb-6 ${isDark ? "text-white/60" : "text-black/60"}`}>
-              Diagflow supports all Mermaid.js diagram types plus Chart.js for advanced charts.
+              Diagflo supports all Mermaid.js diagram types plus Chart.js for advanced charts.
             </p>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -403,7 +403,7 @@ Archie: [adds error handling branches]`}
               Chart.js Support
             </h2>
             <p className={`leading-relaxed mb-4 ${isDark ? "text-white/60" : "text-black/60"}`}>
-              For advanced charts that Mermaid can't handle — logarithmic scales, scatter plots, annotations — Diagflow uses <strong>Chart.js</strong> with a custom DSL.
+              For advanced charts that Mermaid can't handle — logarithmic scales, scatter plots, annotations — Diagflo uses <strong>Chart.js</strong> with a custom DSL.
             </p>
 
             <h3 className={`text-lg font-semibold mb-3 ${isDark ? "text-white" : "text-black"}`}>When is Chart.js used?</h3>
@@ -616,11 +616,11 @@ Archie: [adds error handling branches]`}
               {[
                 {
                   title: "API Key Storage",
-                  desc: "Your Gemini API key is stored only in your browser's localStorage. It is never transmitted to Diagflow servers.",
+                  desc: "Your Gemini API key is stored only in your browser's localStorage. It is never transmitted to Diagflo servers.",
                 },
                 {
                   title: "Direct API Communication",
-                  desc: "Diagram generation requests go directly from your browser to Google's Gemini API. Diagflow acts as a client-only application.",
+                  desc: "Diagram generation requests go directly from your browser to Google's Gemini API. Diagflo acts as a client-only application.",
                 },
                 {
                   title: "Shared Diagrams",
@@ -657,7 +657,7 @@ Archie: [adds error handling branches]`}
               to="/app"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:opacity-90 transition-all shadow-lg shadow-orange-500/25"
             >
-              Open Diagflow
+              Open Diagflo
               <span className="material-symbols-outlined text-base">arrow_forward</span>
             </Link>
           </div>

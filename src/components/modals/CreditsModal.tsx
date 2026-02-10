@@ -27,7 +27,7 @@ export function CreditsModal({ open, onOpenChange }: CreditsModalProps) {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Diagflow was built by @itsyashvardhan. Find more projects and contributions on GitHub.
+            Diagflo was built by @itsyashvardhan. Find more projects and contributions on GitHub.
           </p>
 
           <div className="pt-2">

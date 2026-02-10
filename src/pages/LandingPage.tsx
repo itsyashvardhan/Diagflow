@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { Linkedin } from "lucide-react";
 import { useCanonical } from "@/hooks/use-canonical";
-import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 
 // Modern X (formerly Twitter) logo component
 const XLogo = ({ className }: { className?: string }) => (
@@ -20,7 +20,7 @@ const LandingPage = () => {
   useCanonical("/");
 
   useEffect(() => {
-    document.title = "Diagflow — Intelligent Diagram Generation";
+    document.title = "Diagflo — Intelligent Diagram Generation";
     // Check initial state
     setIsDark(document.documentElement.classList.contains("dark"));
 
@@ -86,8 +86,8 @@ const LandingPage = () => {
       <nav className={`sticky top-0 z-50 backdrop-blur-md border-b transition-all duration-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'} ${isDark ? 'bg-black/80 border-gray-800/50' : 'bg-white/80 border-gray-200/50'}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <DiagflowLogo className="w-9 h-9" />
-            <span className="font-sans text-lg font-semibold tracking-tight">Diagflow</span>
+            <DiagfloLogo className="w-9 h-9" />
+            <span className="font-sans text-lg font-semibold tracking-tight">Diagflo</span>
           </div>
 
           <div className={`hidden md:flex items-center gap-8 text-sm font-medium ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
@@ -252,7 +252,7 @@ const LandingPage = () => {
           >
             <div className="text-center mb-20">
               <h2 className={`font-sans text-4xl font-semibold tracking-tight mb-4 ${isDark ? 'text-[#F5F5F7]' : 'text-[#111]'}`}>
-                Why Diagflow?
+                Why Diagflo?
               </h2>
               <p className={`text-lg font-normal ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
                 Create professional diagrams in seconds, not hours.
@@ -390,7 +390,7 @@ const LandingPage = () => {
               Ready to create your first diagram?
             </h2>
             <p className={`text-lg mb-10 max-w-xl mx-auto font-normal ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-              Join thousands of developers and designers using Diagflow to visualize ideas faster.
+              Join thousands of developers and designers using Diagflo to visualize ideas faster.
             </p>
             <Link
               to="/app"
@@ -409,8 +409,8 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <DiagflowLogo className="w-7 h-7" />
-            <span className="font-sans font-semibold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflow</span>
+            <DiagfloLogo className="w-7 h-7" />
+            <span className="font-sans font-semibold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflo</span>
           </div>
 
           {/* Social Links */}

@@ -53,7 +53,7 @@ export function KeyboardShortcutsModal({ open, onOpenChange }: KeyboardShortcuts
                         Keyboard Shortcuts
                     </DialogTitle>
                     <DialogDescription>
-                        Master Diagflow with these keyboard shortcuts
+                        Master Diagflo with these keyboard shortcuts
                     </DialogDescription>
                 </DialogHeader>
 

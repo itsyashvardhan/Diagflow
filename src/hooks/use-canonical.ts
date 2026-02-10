@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const BASE_URL = "https://diagflow.vercel.app";
+const BASE_URL = "https://diagflo.vercel.app";
 
 /**
  * Sets the canonical link tag for the current page.

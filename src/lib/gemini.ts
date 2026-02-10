@@ -1,5 +1,5 @@
 import { logger } from "./logger";
-import { Message, DiagramResponse } from "@/types/diagflow";
+import { Message, DiagramResponse } from "@/types/diagflo";
 
 export const GEMINI_MODEL = "gemini-2.5-flash-lite";
 export const GEMINI_SUPPORTS_IMAGE_INPUT = true;

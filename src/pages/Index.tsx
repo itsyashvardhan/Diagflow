@@ -16,7 +16,7 @@ import { ShareModal } from "@/components/modals/ShareModal";
 import { storage } from "@/lib/storage";
 import { getSharedDiagram } from "@/lib/shareLinks";
 import { generateDiagram } from "@/lib/gemini";
-import { Message, DiagramHistoryEntry, AppSettings, Attachment } from "@/types/diagflow";
+import { Message, DiagramHistoryEntry, AppSettings, Attachment } from "@/types/diagflo";
 import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 import { useParams } from "react-router-dom";
@@ -34,7 +34,7 @@ import {
 import { Github, Share2, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CreditsModal } from "@/components/modals/CreditsModal";
-import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 import { StarterPrompts, QuickTips } from "@/components/onboarding/StarterContent";
 import { useCanonical } from "@/hooks/use-canonical";
 
@@ -63,7 +63,7 @@ const Index = () => {
   const MIN_CHAT_WIDTH = 320; // px - ensures usability of chat input
   const [chatWidth, setChatWidth] = useState<number>(() => {
     try {
-      const saved = localStorage.getItem("diagflow:chatWidth");
+      const saved = localStorage.getItem("diagflo:chatWidth");
       if (saved) {
         return Number(saved);
       }
@@ -90,12 +90,12 @@ const Index = () => {
   useEffect(() => {
     latestWidthRef.current = chatWidth;
     try {
-      localStorage.setItem("diagflow:chatWidth", String(chatWidth));
+      localStorage.setItem("diagflo:chatWidth", String(chatWidth));
     } catch (_e) { /* localStorage may be unavailable */ }
   }, [chatWidth]);
 
   useEffect(() => {
-    document.title = "Diagflow — Intelligent Diagram Builder";
+    document.title = "Diagflo — Intelligent Diagram Builder";
   }, []);
 
   useEffect(() => {
@@ -621,9 +621,9 @@ const Index = () => {
           <div className="flex items-center gap-3 group cursor-default shrink-0 z-10">
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
-              <DiagflowLogo className="relative w-8 h-8 sm:w-9 sm:h-9 shadow-lg shadow-primary/20" />
+              <DiagfloLogo className="relative w-8 h-8 sm:w-9 sm:h-9 shadow-lg shadow-primary/20" />
             </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight gradient-text hidden xs:block">Diagflow</h1>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight gradient-text hidden xs:block">Diagflo</h1>
           </div>
 
           {/* Center: Navigation Pill (absolutely positioned for true center) */}

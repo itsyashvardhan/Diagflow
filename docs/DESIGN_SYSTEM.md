@@ -1,4 +1,4 @@
-# Diagflow Design System
+# Diagflo Design System
 ## FAANG APM Grade Design Documentation
 
 ---
@@ -276,5 +276,5 @@ transition: all 0.7s ease-out; /* For hero elements */
 
 ---
 
-*Design System v1.0 — Diagflow*
+*Design System v1.0 — Diagflo*
 *Created: January 2026*

@@ -2,7 +2,7 @@ import { useState, useRef, KeyboardEvent, ClipboardEvent, ChangeEvent, DragEvent
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send, Sparkles, X, Upload } from "lucide-react";
-import { Attachment } from "@/types/diagflow";
+import { Attachment } from "@/types/diagflo";
 import { useToast } from "@/hooks/use-toast";
 import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
 

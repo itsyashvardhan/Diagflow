@@ -1,4 +1,4 @@
-import { MermaidTheme } from "@/types/diagflow";
+import { MermaidTheme } from "@/types/diagflo";
 import { sanitizeDiagram, detectDiagramType, getDiagramTypeLabel } from "./diagramSanitizer";
 import { logger } from "./logger";
 

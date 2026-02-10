@@ -1,7 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { logger } from "@/lib/logger";
-import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 import { ArrowLeft, Home, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -9,7 +9,7 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    document.title = "Page Not Found | Diagflow";
+    document.title = "Page Not Found | Diagflo";
     logger.warn("404 - Non-existent route accessed: " + location.pathname);
   }, [location.pathname]);
 
@@ -24,7 +24,7 @@ const NotFound = () => {
       <div className="relative z-10 flex flex-col items-center gap-8 text-center max-w-md">
         {/* Logo */}
         <div className="p-5 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 shadow-2xl backdrop-blur-sm">
-          <DiagflowLogo className="w-14 h-14 opacity-80" />
+          <DiagfloLogo className="w-14 h-14 opacity-80" />
         </div>
 
         {/* 404 number */}

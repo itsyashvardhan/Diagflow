@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { Message } from "@/types/diagflow";
+import { Message } from "@/types/diagflo";
 import { Clock, Loader2, AlertCircle, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { logger } from "@/lib/logger";

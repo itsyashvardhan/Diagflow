@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Diagflow Light Theme - Clean off-white with emerald/teal accents */
+    /* Diagflo Light Theme - Clean off-white with emerald/teal accents */
     --background: 40 20% 97%;
     --background-secondary: 40 15% 94%;
     --foreground: 240 10% 10%;
@@ -69,7 +69,7 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Diagflow Dark Theme - Deep space gradients with emerald/teal accents */
+    /* Diagflo Dark Theme - Deep space gradients with emerald/teal accents */
     --background: 240 10% 3.9%;
     --background-secondary: 240 8% 8%;
     --foreground: 210 40% 98%;

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCanonical } from "@/hooks/use-canonical";
-import { DiagflowLogo } from "@/components/logo/DiagflowLogo";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 import { ArrowLeft } from "lucide-react";
 
 const TermsPage = () => {
@@ -9,7 +9,7 @@ const TermsPage = () => {
   useCanonical("/terms");
 
   useEffect(() => {
-    document.title = "Terms of Service | Diagflow";
+    document.title = "Terms of Service | Diagflo";
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
@@ -26,9 +26,9 @@ const TermsPage = () => {
       <nav className={`sticky top-0 z-50 backdrop-blur-xl border-b ${isDark ? "bg-black/60 border-white/10" : "bg-white/60 border-black/5"}`}>
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <DiagflowLogo className="w-7 h-7" />
+            <DiagfloLogo className="w-7 h-7" />
             <span className="font-semibold text-[15px] bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-              Diagflow
+              Diagflo
             </span>
           </Link>
           <Link
@@ -51,14 +51,14 @@ const TermsPage = () => {
 
         <Section title="Acceptance of Terms">
           <p>
-            By accessing or using Diagflow ("the Service"), you agree to be bound by these Terms of Service.
+            By accessing or using Diagflo ("the Service"), you agree to be bound by these Terms of Service.
             If you do not agree, do not use the Service.
           </p>
         </Section>
 
         <Section title="Description of Service">
           <p>
-            Diagflow is an Intelligent diagramming tool that converts natural language prompts into visual diagrams
+            Diagflo is an Intelligent diagramming tool that converts natural language prompts into visual diagrams
             using Mermaid.js and Chart.js. The Service operates primarily as a client-side application — your
             data stays in your browser.
           </p>
@@ -76,7 +76,7 @@ const TermsPage = () => {
 
         <Section title="API Key Usage">
           <p>
-            Diagflow does not store, transmit, or have access to your API key. It is stored in your browser's
+            Diagflo does not store, transmit, or have access to your API key. It is stored in your browser's
             localStorage and sent directly to Google's servers. You are solely responsible for any costs or
             usage associated with your API key.
           </p>
@@ -85,7 +85,7 @@ const TermsPage = () => {
         <Section title="Shared Content">
           <p>
             When you share a diagram, the diagram code and title are stored on our servers (Supabase) and
-            accessible via a public link. You retain ownership of your content. By sharing, you grant Diagflow
+            accessible via a public link. You retain ownership of your content. By sharing, you grant Diagflo
             a non-exclusive license to host and display the shared diagram.
           </p>
           <p>
@@ -96,7 +96,7 @@ const TermsPage = () => {
 
         <Section title="Intellectual Property">
           <p>
-            Diagflow's source code, design, and branding are protected by copyright. Diagrams you create are yours.
+            Diagflo's source code, design, and branding are protected by copyright. Diagrams you create are yours.
             Mermaid.js and Chart.js are open-source projects with their own licenses.
           </p>
         </Section>
@@ -111,7 +111,7 @@ const TermsPage = () => {
 
         <Section title="Limitation of Liability">
           <p>
-            To the maximum extent permitted by law, Diagflow and its creators shall not be liable for any indirect,
+            To the maximum extent permitted by law, Diagflo and its creators shall not be liable for any indirect,
             incidental, special, consequential, or punitive damages arising from your use of the Service, including
             but not limited to loss of data, profits, or business opportunities.
           </p>
