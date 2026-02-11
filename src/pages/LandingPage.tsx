@@ -145,17 +145,29 @@ const LandingPage = () => {
                 <p className={`text-lg sm:text-xl font-normal leading-relaxed mb-10 max-w-lg tracking-wide ${isDark ? 'text-[#A1A1A6]' : 'text-[#515154]'}`}>
                   The fastest way to visualize complex systems. Describe your architecture in any language, and let Archie handle the structure.
                 </p>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
-                  <Link
-                    to="/app"
-                    className={`group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${isDark
-                      ? 'bg-gradient-to-b from-white to-gray-100 text-black shadow-lg shadow-white/10'
-                      : 'bg-gradient-to-b from-[#111] to-[#222] text-white shadow-lg shadow-black/20'
-                      }`}
-                  >
-                    Start Visualizing for Free
-                    <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-0.5">arrow_forward</span>
-                  </Link>
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="flex flex-row items-center gap-3">
+                    <Link
+                      to="/docs"
+                      className={`group relative inline-flex sm:hidden items-center justify-center gap-2 px-6 py-4 rounded-full text-base font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border ${isDark
+                        ? 'border-gray-700 text-gray-300 hover:border-orange-500/60 hover:text-white'
+                        : 'border-gray-300 text-gray-700 hover:border-orange-400/60 hover:text-[#111]'
+                        }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">description</span>
+                      Docs
+                    </Link>
+                    <Link
+                      to="/app"
+                      className={`group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${isDark
+                        ? 'bg-gradient-to-b from-white to-gray-100 text-black shadow-lg shadow-white/10'
+                        : 'bg-gradient-to-b from-[#111] to-[#222] text-white shadow-lg shadow-black/20'
+                        }`}
+                    >
+                      Get Started
+                      <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-0.5">arrow_forward</span>
+                    </Link>
+                  </div>
                   <p className={`flex items-center text-sm font-medium ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
                     <span className="material-symbols-outlined text-green-500 text-base mr-1.5">check_circle</span>
                     No credit card required
