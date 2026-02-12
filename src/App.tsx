@@ -6,6 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 
+// Eagerly loaded — renders instantly as the lightest first chunk
+import LandingNavbar from "./components/landing/LandingNavbar";
+
 // Lazy-loaded pages for route-level code splitting
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
@@ -32,7 +35,19 @@ const App = () => (
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            {/* Navbar is eagerly loaded and renders instantly.
+                LandingPage body lazy-loads naturally behind it. */}
+            <Route
+              path="/"
+              element={
+                <>
+                  <LandingNavbar />
+                  <Suspense fallback={null}>
+                    <LandingPage />
+                  </Suspense>
+                </>
+              }
+            />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/docs" element={<DocsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
