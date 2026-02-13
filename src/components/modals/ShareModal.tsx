@@ -3,7 +3,7 @@ import { logger } from "@/lib/logger";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link2, Copy, Check, Code, Twitter, Linkedin, AlertCircle } from "lucide-react";
+import { Link2, Copy, Check, Code, Twitter, Linkedin } from "lucide-react";
 import { toast } from "sonner";
 import { createShareLink } from "@/lib/shareLinks";
 
@@ -55,6 +55,7 @@ export function ShareModal({ open, onOpenChange, diagramCode, diagramTitle = "My
     };
 
     const socialShareText = `Check out my diagram: ${diagramTitle}`;
+    const socialShareMessage = shareUrl ? `${socialShareText}\n${shareUrl}` : socialShareText;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,9 +145,10 @@ export function ShareModal({ open, onOpenChange, diagramCode, diagramTitle = "My
                                 variant="outline"
                                 size="sm"
                                 className="flex-1 gap-2"
+                                disabled={!shareUrl || isLoading}
                                 onClick={() => {
-                                    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(socialShareText)}&url=${encodeURIComponent(shareUrl)}`;
-                                    window.open(url, "_blank");
+                                    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(socialShareMessage)}`;
+                                    window.open(url, "_blank", "noopener,noreferrer");
                                 }}
                             >
                                 <Twitter className="w-4 h-4" />
@@ -156,15 +158,28 @@ export function ShareModal({ open, onOpenChange, diagramCode, diagramTitle = "My
                                 variant="outline"
                                 size="sm"
                                 className="flex-1 gap-2"
+                                disabled={!shareUrl || isLoading}
                                 onClick={() => {
                                     const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
-                                    window.open(url, "_blank");
+                                    window.open(url, "_blank", "noopener,noreferrer");
                                 }}
                             >
                                 <Linkedin className="w-4 h-4" />
                                 LinkedIn
                             </Button>
                         </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full"
+                            disabled={!shareUrl || isLoading}
+                            onClick={() => handleCopy(socialShareMessage, "Share Message")}
+                        >
+                            {copied === "Share Message" ? "Copied share message" : "Copy share message (text + link)"}
+                        </Button>
+                        <p className="text-xs text-muted-foreground">
+                            Social platforms render previews from URL metadata. Attaching a custom per-diagram image preview is not supported yet.
+                        </p>
                     </div>
                 </div>
             </DialogContent>
