@@ -389,7 +389,7 @@ const LandingPage = () => {
               <XLogo className="w-5 h-5" />
             </a>
             <a
-              href="https://linkedin.com/in/yashvardhan04"
+              href="https://www.linkedin.com/company/diagflo"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Connect on LinkedIn"
