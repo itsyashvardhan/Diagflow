@@ -12,11 +12,15 @@ import { CodeViewModal } from "@/components/modals/CodeViewModal";
 import { ExportModal } from "@/components/modals/ExportModal";
 import { HistoryModal } from "@/components/modals/HistoryModal";
 import { HelpModal } from "@/components/modals/HelpModal";
+import { ShareModal } from "@/components/modals/ShareModal";
 import { storage } from "@/lib/storage";
+import { getSharedDiagram } from "@/lib/shareLinks";
 import { generateDiagram } from "@/lib/gemini";
-import { Message, DiagramHistoryEntry, AppSettings, Attachment } from "@/types/diagflow";
+import { Message, DiagramHistoryEntry, AppSettings, Attachment } from "@/types/diagflo";
 import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
+import { useParams } from "react-router-dom";
+import { logger } from "@/lib/logger";
 import {
   Settings,
   Sparkles,
@@ -24,13 +28,21 @@ import {
   HelpCircle,
   Maximize2,
   Minimize2,
-  Workflow,
+  MessageCircle,
   RotateCcw,
 } from "lucide-react";
-import { Github } from "lucide-react";
+import { Github, Share2, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 import { CreditsModal } from "@/components/modals/CreditsModal";
+import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
+import { StarterPrompts, QuickTips } from "@/components/onboarding/StarterContent";
+import { useCanonical } from "@/hooks/use-canonical";
 
 const Index = () => {
+  // Get share ID from URL params (for /d/:shareId route)
+  const { shareId } = useParams<{ shareId?: string }>();
+  useCanonical("/app");
+
   // State
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentDiagram, setCurrentDiagram] = useState("");
@@ -48,10 +60,10 @@ const Index = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Chat column sizing (resizable, max 40% of viewport)
-  const MIN_CHAT_WIDTH = 280; // px
+  const MIN_CHAT_WIDTH = 320; // px - ensures usability of chat input
   const [chatWidth, setChatWidth] = useState<number>(() => {
     try {
-      const saved = localStorage.getItem("diagflow:chatWidth");
+      const saved = localStorage.getItem("diagflo:chatWidth");
       if (saved) {
         return Number(saved);
       }
@@ -78,9 +90,13 @@ const Index = () => {
   useEffect(() => {
     latestWidthRef.current = chatWidth;
     try {
-      localStorage.setItem("diagflow:chatWidth", String(chatWidth));
-    } catch { }
+      localStorage.setItem("diagflo:chatWidth", String(chatWidth));
+    } catch (_e) { /* localStorage may be unavailable */ }
   }, [chatWidth]);
+
+  useEffect(() => {
+    document.title = "Diagflo — Intelligent Diagram Builder";
+  }, []);
 
   useEffect(() => {
     // Ensure saved width doesn't exceed 40% when window resizes
@@ -141,9 +157,52 @@ const Index = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 1024);
+
+  // Responsive listener
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  const [showShare, setShowShare] = useState(false);
+
+  // Mobile drawer state - which view is active on mobile
+  const [mobileView, setMobileView] = useState<'chat' | 'canvas'>('chat');
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Swipe gesture handling for mobile
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobile) return;
+
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50; // Minimum distance for a swipe
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        // Swiped left - show canvas
+        setMobileView('canvas');
+      } else {
+        // Swiped right - show chat
+        setMobileView('chat');
+      }
+    }
+  };
 
   // Load from storage on mount
   useEffect(() => {
@@ -160,6 +219,58 @@ const Index = () => {
     // Always dark mode
     document.documentElement.classList.add('dark');
   }, []);
+
+  // Handle shared diagram loading from Supabase
+  useEffect(() => {
+    const loadSharedData = async () => {
+      if (shareId) {
+        logger.info("Loading shared diagram with ID: " + shareId);
+        setIsGenerating(true);
+        try {
+          const shared = await getSharedDiagram(shareId);
+          if (shared) {
+            logger.info("Shared diagram loaded successfully", { id: shared.id, title: shared.title });
+            setCurrentDiagram(shared.code);
+            // Optionally add a system message explaining this is a shared diagram
+            setMessages(prev => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                role: "assistant",
+                content: `You're viewing a shared diagram: **${shared.title || "Untitled"}**`,
+                timestamp: Date.now()
+              }
+            ]);
+            toast({
+              title: "Shared Diagram Loaded",
+              description: `Viewing: ${shared.title || "Shared Diagram"}`,
+            });
+          } else {
+            logger.warn("Shared diagram not found: " + shareId);
+            toast({
+              title: "Diagram Not Found",
+              description: "The shared diagram link might be invalid or expired. Check the console for details.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          logger.error("Error loading shared diagram", error);
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          toast({
+            title: "Error Loading Shared Diagram",
+            description: `Failed to load: ${errorMessage}. Check browser console for details.`,
+            variant: "destructive",
+          });
+        } finally {
+          setIsGenerating(false);
+          // Clean up the URL to /app or similar if desired, 
+          // but keeping /d/shareId is fine for direct links
+        }
+      }
+    };
+    loadSharedData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shareId]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -210,6 +321,7 @@ const Index = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyIndex, diagramHistory]);
 
   const handleSendMessage = async (content: string, attachments: Attachment[] = []) => {
@@ -237,30 +349,65 @@ const Index = () => {
       content,
       timestamp: Date.now(),
       attachments: attachments.length > 0 ? attachments : undefined,
+      status: "sending", // Start with sending status
     };
 
+    const userMessageIndex = messages.length;
     const updatedHistory = [...messages, userMessage];
     setMessages(updatedHistory);
     setIsGenerating(true);
+
+    // Helper to update the user message status
+    const updateMessageStatus = (updates: Partial<Message>) => {
+      setMessages(prev => {
+        const newMessages = [...prev];
+        if (newMessages[userMessageIndex]) {
+          newMessages[userMessageIndex] = { ...newMessages[userMessageIndex], ...updates };
+        }
+        return newMessages;
+      });
+    };
 
     try {
       const response = await generateDiagram(
         settings.geminiApiKey,
         content,
         currentDiagram,
-        updatedHistory
+        updatedHistory,
+        // onRetry callback - called when rate limited and retrying
+        (retryInfo) => {
+          updateMessageStatus({
+            status: "queued",
+            retryAttempt: retryInfo.attempt,
+            estimatedWaitSeconds: retryInfo.estimatedWaitSeconds,
+            queueReason: retryInfo.reason,
+          });
+
+          // Show a gentle toast notification
+          toast({
+            title: retryInfo.reason,
+            description: `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries} • Wait ~${retryInfo.estimatedWaitSeconds}s`,
+          });
+        }
       );
 
       const assistantMessage: Message = {
         role: "assistant",
         content: `${response.explanation}\n\n${response.suggestions.length > 0
-            ? "**Suggestions:**\n" + response.suggestions.map((s) => `• ${s}`).join("\n")
-            : ""
+          ? "**Suggestions:**\n" + response.suggestions.map((s) => `• ${s}`).join("\n")
+          : ""
           }`,
         timestamp: Date.now(),
       };
 
-      const finalHistory = [...updatedHistory, assistantMessage];
+      // Mark user message as sent (success)
+      updateMessageStatus({
+        status: "sent",
+        retryAttempt: undefined,
+        estimatedWaitSeconds: undefined
+      });
+
+      const finalHistory = [...messages, { ...userMessage, status: "sent" as const }, assistantMessage];
       setMessages(finalHistory);
       setCurrentDiagram(response.code);
 
@@ -286,10 +433,26 @@ const Index = () => {
         description: "Your system diagram is ready",
       });
     } catch (error) {
-      console.error("Generation error:", error);
+      logger.error("Generation error", error);
+
+      // Mark user message as error
+      updateMessageStatus({
+        status: "error",
+        retryAttempt: undefined,
+        estimatedWaitSeconds: undefined
+      });
+
+      // Check if it's a rate limit error and show specific guidance
+      const isRateLimitError = error instanceof Error &&
+        (error.name === "RateLimitError" ||
+          error.message.toLowerCase().includes("rate limit") ||
+          error.message.includes("429"));
+
       toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate diagram",
+        title: isRateLimitError ? "Rate Limit Reached" : "Generation Failed",
+        description: isRateLimitError
+          ? "API quota exceeded. Wait a moment and try again, or upgrade your API tier for higher limits."
+          : (error instanceof Error ? error.message : "Failed to generate diagram"),
         variant: "destructive",
       });
     } finally {
@@ -390,6 +553,35 @@ const Index = () => {
     }
   };
 
+  // Fit diagram to screen - calculates optimal zoom based on SVG and container size
+  const handleFitToScreen = () => {
+    const svgContainer = document.getElementById("diagram-svg-container");
+    const svg = svgContainer?.querySelector("svg");
+    const canvas = document.querySelector("[data-diagram-canvas]") as HTMLElement;
+
+    if (!svg || !canvas) {
+      setZoom(1);
+      return;
+    }
+
+    // Get natural SVG dimensions
+    const svgWidth = svg.getBBox?.()?.width || svg.clientWidth || 800;
+    const svgHeight = svg.getBBox?.()?.height || svg.clientHeight || 600;
+
+    // Get available canvas space (with padding)
+    const padding = 64; // 32px on each side
+    const canvasWidth = canvas.clientWidth - padding;
+    const canvasHeight = canvas.clientHeight - padding;
+
+    // Calculate zoom to fit both dimensions
+    const zoomX = canvasWidth / svgWidth;
+    const zoomY = canvasHeight / svgHeight;
+    const optimalZoom = Math.min(zoomX, zoomY, 2); // Cap at 200%
+
+    // Clamp between 0.1 and 2
+    setZoom(Math.max(0.1, Math.min(optimalZoom, 2)));
+  };
+
   // Rotating text helper for the welcome panel
   function RotatingText({ phrases, interval = 3000 }: { phrases: string[]; interval?: number }) {
     const [index, setIndex] = useState(0);
@@ -411,136 +603,228 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Skip to content - Accessibility */}
+      <a
+        href="#app-workspace"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:text-sm focus:font-medium"
+      >
+        Skip to workspace
+      </a>
+
       {/* Gradient Background */}
       <div className="fixed inset-0 pointer-events-none" style={{ background: "var(--gradient-background)" }} />
 
-      {/* Header */}
-      <header className="relative z-10 glass-panel border-b border-white/10 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
-              <Workflow className="w-6 h-6 text-white" />
+      {/* Header - Hybrid Layout: Logo Left | Nav Center | Utils Right */}
+      <header className="relative z-20 premium-blur border-b border-white/5 px-4 sm:px-6 py-3">
+        <div className="relative flex items-center justify-between">
+          {/* Left: Logo & Brand */}
+          <div className="flex items-center gap-3 group cursor-default shrink-0 z-10">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <DiagfloLogo className="relative w-8 h-8 sm:w-9 sm:h-9 shadow-lg shadow-primary/20" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold gradient-text">Diagflow</h1>
-            </div>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight gradient-text hidden xs:block">Diagflo</h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Center: Navigation Pill (absolutely positioned for true center) */}
+          <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1.5 px-1.5 py-1 glass-panel rounded-full shadow-inner">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowHistory(true)}
-              className="glass-panel"
+              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <History className="w-4 h-4 mr-2" />
-              History
+              <History className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden lg:inline">History</span>
             </Button>
+
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowExamples(true)}
-              className="glass-panel"
+              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Examples
+              <Sparkles className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden lg:inline">Examples</span>
             </Button>
+
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowSettings(true)}
-              className="glass-panel"
+              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
             >
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
+              <Settings className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
+              <span className="text-xs font-medium hidden lg:inline">Settings</span>
             </Button>
+
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setShowShare(true)}
+              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all text-primary shrink-0"
+            >
+              <Share2 className="w-3.5 h-3.5 lg:mr-2" />
+              <span className="text-xs font-medium hidden lg:inline">Share</span>
+            </Button>
+
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
+
+            <Link to="/docs">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
+              >
+                <BookOpen className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
+                <span className="text-xs font-medium hidden lg:inline">Docs</span>
+              </Button>
+            </Link>
+          </div>
+
+          {/* Right: Utility Icons */}
+          <div className="flex items-center gap-1 shrink-0 z-10">
+            {/* Mobile-only: Compact nav buttons */}
+            <div className="flex md:hidden items-center gap-0.5 mr-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowHistory(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+                title="History"
+              >
+                <History className="w-3.5 h-3.5 opacity-70" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowExamples(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+                title="Examples"
+              >
+                <Sparkles className="w-3.5 h-3.5 opacity-70" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSettings(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+                title="Settings"
+              >
+                <Settings className="w-3.5 h-3.5 opacity-70" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowShare(true)}
+                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all text-primary"
+                title="Share"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+
+            <div className="hidden sm:block w-px h-4 bg-white/10 mx-1" />
+
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setShowHelp(true)}
-              className="glass-panel"
-              title="Getting Started Guide"
+              className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
+              title="Help Guide"
             >
-              <HelpCircle className="w-4 h-4" />
+              <HelpCircle className="w-3.5 h-3.5 opacity-70" />
             </Button>
 
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => setShowCredits(true)}
-              className="glass-panel"
-              title="Credits & Author"
+              className="w-8 h-8 rounded-full hover:bg-white/5 transition-all text-muted-foreground/50 hover:text-foreground"
+              title="Credits & GitHub"
             >
-              <Github className="w-4 h-4" />
+              <Github className="w-3.5 h-3.5" />
             </Button>
 
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={toggleFullscreen}
-              className="glass-panel"
+              className="hidden sm:inline-flex w-8 h-8 rounded-full hover:bg-white/5 transition-all"
               title="Toggle Fullscreen"
             >
               {isFullscreen ? (
-                <Minimize2 className="w-4 h-4" />
+                <Minimize2 className="w-3.5 h-3.5 opacity-70" />
               ) : (
-                <Maximize2 className="w-4 h-4" />
+                <Maximize2 className="w-3.5 h-3.5 opacity-70" />
               )}
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="relative z-10 flex-1 flex overflow-hidden">
+      <div
+        className="relative z-10 flex-1 flex flex-col lg:flex-row overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        id="app-workspace"
+        role="main"
+        aria-label="Diagram workspace"
+      >
         {/* Chat Column (resizable) */}
         <div
-          style={{ width: `${chatWidth}px` }}
-          className="flex flex-col border-r border-white/10 min-w-[200px] max-w-[40vw]"
+          style={{
+            width: isMobile ? '100%' : `${chatWidth}px`,
+            minWidth: isMobile ? '100%' : '320px',
+            display: isMobile && mobileView !== 'chat' ? 'none' : 'flex'
+          }}
+          className={`flex-col border-b lg:border-b-0 lg:border-r border-white/5 shrink-0 transition-[width] duration-300 ${isMobile ? 'pb-[60px]' : ''}`}
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <span className="text-sm font-semibold tracking-wide uppercase text-muted-foreground/80">
-              Conversation
-            </span>
+          <div className="flex items-center justify-between px-6 py-3 lg:py-4 border-b border-white/5">
+            <div className="flex flex-col">
+              <span className="text-[9px] lg:text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/50">
+                Workspace
+              </span>
+              <span className="text-xs lg:text-sm font-semibold text-foreground/80">
+                Conversation
+              </span>
+            </div>
             <Button
               size="sm"
               variant="ghost"
-              className="gap-2"
+              className="h-7 lg:h-8 gap-2 rounded-full px-2 lg:px-3 text-[10px] lg:text-xs opacity-60 hover:opacity-100 transition-opacity"
               onClick={handleRefreshChat}
               disabled={isGenerating}
-              title="Start a new conversation"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>Reset</span>
+              <RotateCcw className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+              <span>New</span>
             </Button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
               <div className="h-full flex items-center justify-center">
-                <div className="text-center space-y-3 max-w-sm animate-float">
-                  <div className="w-20 h-20 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto">
-                    <Workflow className="w-10 h-10 text-white" />
+                <div className="text-center space-y-4 max-w-sm animate-slide-up">
+                  <div className="relative w-24 h-24 mx-auto mb-6 opacity-0 hidden">
                   </div>
-                  <h2 className="text-xl font-semibold opacity-90" style={{ fontSize: 'calc(1.25rem + 2pt)' }}>Text to Flow</h2>
-                  <div className="text-muted-foreground" style={{ fontSize: 'calc(0.875rem + 2pt)', opacity: 0.80 }}>
-                    <span className="font-medium">Ask Archie to</span>
-                    <span className="ml-2">
-                      <RotatingText
-                        phrases={[
-                          "design your system",
-                          "create flowcharts",
-                          "produce illustrations",
-                          "generate architecture diagrams",
-                          "explain data flows",
-                        ]}
-                      />
-                    </span>
-                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground/90 leading-tight">Flow your thoughts</h2>
+                  <p className="text-sm text-muted-foreground/60 max-w-xs mx-auto">
+                    Visualize complex systems in seconds.
+                  </p>
+
+                  {/* Guided First Steps */}
+                  <StarterPrompts onSelect={(prompt) => handleSendMessage(prompt)} />
+
+                  {/* Quick Tips */}
+                  <QuickTips />
                 </div>
               </div>
             )}
@@ -554,7 +838,7 @@ const Index = () => {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-white/10">
+          <div className="p-3 lg:p-6 border-t border-white/5 bg-black/5">
             <ChatInput
               onSend={handleSendMessage}
               onShowExamples={() => setShowExamples(true)}
@@ -565,58 +849,90 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Resize handle (thin visible bar + stacked <> icon for affordance) */}
+        {/* Tactical Resize handle (desktop only) */}
         <div
           role="separator"
-          aria-orientation="vertical"
           onMouseDown={handleMouseDownResize}
           onTouchStart={handleTouchStartResize}
-          className="w-6 relative flex items-center justify-center cursor-col-resize select-none"
+          className="hidden lg:flex w-1.5 hover:w-2 group relative items-center justify-center cursor-col-resize select-none transition-all duration-300"
         >
-          {/* thin visual bar */}
-          <div className="w-4 h-10 bg-white/5 rounded" />
+          {/* Main divider line */}
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/10 group-hover:bg-primary/40 transition-colors" />
 
-          {/* stacked < > icons to indicate draggable divider (pointer-events-none so drag still works) */}
-          <div className="absolute flex flex-col items-center justify-center pointer-events-none gap-1">
-            <span className="text-[10px] leading-none text-muted-foreground/70">{'<'}</span>
-            <span className="text-[10px] leading-none text-muted-foreground/70">{'>'}</span>
-          </div>
+          {/* Subtle tactile strip */}
+          <div className="w-1 h-12 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
 
         {/* Diagram Column */}
-        <div className="flex-1 flex flex-col relative">
-          {/* Controls Bar */}
-          <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
-            <DiagramControls
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              onViewCode={() => setShowCodeView(true)}
-              onExport={() => setShowExport(true)}
-              canUndo={historyIndex > 0}
-              canRedo={historyIndex < diagramHistory.length - 1}
-              disabled={!currentDiagram}
-            />
+        <div
+          className="flex-1 flex flex-col relative bg-muted/10"
+          style={{
+            display: isMobile && mobileView !== 'canvas' ? 'none' : 'flex'
+          }}
+        >
+          {/* Floating Controls Overlay */}
+          <div className="absolute top-3 lg:top-6 left-3 lg:left-6 right-3 lg:right-6 z-10 flex flex-col lg:flex-row items-end lg:items-center justify-between pointer-events-none gap-2">
+            <div className="pointer-events-auto">
+              <DiagramControls
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                onViewImport={() => setShowCodeView(true)}
+                onExport={() => setShowExport(true)}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < diagramHistory.length - 1}
+                disabled={!currentDiagram}
+              />
+            </div>
 
-            <ZoomControls
-              zoom={zoom}
-              onZoomIn={handleZoomInExpanded}
-              onZoomOut={handleZoomOutExpanded}
-              onZoomReset={handleZoomResetExpanded}
-              onFullscreen={toggleFullscreen}
-            />
+            <div className="pointer-events-auto">
+              <ZoomControls
+                zoom={zoom}
+                onZoomIn={handleZoomInExpanded}
+                onZoomOut={handleZoomOutExpanded}
+                onZoomReset={handleZoomResetExpanded}
+                onFitToScreen={handleFitToScreen}
+              />
+            </div>
           </div>
 
-          {/* Diagram Viewer */}
-          <div className="flex-1 dotted-grid relative">
+          {/* Diagram Canvas */}
+          <div className="flex-1 dotted-grid relative" data-diagram-canvas>
             <DiagramViewer
               code={currentDiagram}
               theme={settings.theme}
               zoom={zoom}
               onWheelZoom={handleWheelZoom}
+              prompt={diagramHistory[historyIndex]?.prompt}
             />
           </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Tab Bar */}
+      {isMobile && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-white/5 bg-background/95 backdrop-blur-lg safe-area-inset-bottom">
+          <button
+            onClick={() => setMobileView('chat')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors flex flex-col items-center gap-1 ${mobileView === 'chat'
+              ? 'text-primary'
+              : 'text-muted-foreground'
+              }`}
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-xs">Chat</span>
+          </button>
+          <button
+            onClick={() => setMobileView('canvas')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors flex flex-col items-center gap-1 ${mobileView === 'canvas'
+              ? 'text-primary'
+              : 'text-muted-foreground'
+              }`}
+          >
+            <Sparkles className="w-5 h-5" />
+            <span className="text-xs">Canvas</span>
+          </button>
+        </div>
+      )}
 
       {/* Modals */}
       <SettingsModal
@@ -660,6 +976,12 @@ const Index = () => {
       <CreditsModal
         open={showCredits}
         onOpenChange={setShowCredits}
+      />
+
+      <ShareModal
+        open={showShare}
+        onOpenChange={setShowShare}
+        diagramCode={currentDiagram}
       />
     </div>
   );

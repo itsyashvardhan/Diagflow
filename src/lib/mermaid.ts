@@ -1,4 +1,6 @@
-import { MermaidTheme } from "@/types/diagflow";
+import { MermaidTheme } from "@/types/diagflo";
+import { sanitizeDiagram, detectDiagramType, getDiagramTypeLabel } from "./diagramSanitizer";
+import { logger } from "./logger";
 
 export interface MermaidConfig {
   theme: MermaidTheme;
@@ -17,7 +19,7 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
         secondaryColor: "#7dd3fc",
         tertiaryColor: "#c084fc",
         fontSize: "16px",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "Manrope, system-ui, sans-serif",
       },
     },
     forest: {
@@ -28,7 +30,7 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
         primaryBorderColor: "#10b981",
         lineColor: "#6ee7b7",
         fontSize: "16px",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "Manrope, system-ui, sans-serif",
       },
     },
     dark: {
@@ -40,7 +42,7 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
         primaryBorderColor: "#6d28d9",
         lineColor: "#a78bfa",
         fontSize: "16px",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "Manrope, system-ui, sans-serif",
       },
     },
     neutral: {
@@ -51,7 +53,7 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
         primaryBorderColor: "#475569",
         lineColor: "#94a3b8",
         fontSize: "16px",
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "Manrope, system-ui, sans-serif",
       },
     },
   };
@@ -89,7 +91,7 @@ export const initializeMermaid = async (theme: MermaidTheme = "default") => {
     lastTheme = theme;
     return mermaid;
   } catch (error) {
-    console.error("Failed to initialize Mermaid:", error);
+    logger.error("Failed to initialize Mermaid", error);
     throw new Error("Failed to initialize diagram renderer");
   }
 };
@@ -148,7 +150,13 @@ export const renderDiagram = async (
   }
 
   try {
-    // Re-initialize if theme changed
+    // Step 1: Sanitize the diagram code (auto-fix known issues)
+    const sanitized = sanitizeDiagram(trimmedCode);
+
+    const diagramType = sanitized.diagramType;
+    const codeToRender = sanitized.code;
+
+    // Step 2: Re-initialize if theme changed
     const mermaid = lastTheme !== theme
       ? await initializeMermaid(theme)
       : mermaidInstance || await initializeMermaid(theme);
@@ -158,10 +166,11 @@ export const renderDiagram = async (
       throw new Error(`Diagram container not found`);
     }
 
-    // Validate syntax first
-    const validation = await validateMermaidSyntax(trimmedCode);
+    // Step 3: Validate syntax
+    const validation = await validateMermaidSyntax(codeToRender);
     if (!validation.valid) {
-      throw new Error(validation.error || "Invalid diagram syntax");
+      const typeLabel = getDiagramTypeLabel(diagramType);
+      throw new Error(`${typeLabel} syntax error: ${validation.error || "Invalid syntax"}`);
     }
 
     // Clear previous content safely
@@ -170,8 +179,8 @@ export const renderDiagram = async (
     // Generate unique ID for this render
     const graphId = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Render the diagram with timeout protection
-    const renderPromise = mermaid.render(graphId, trimmedCode);
+    // Step 4: Render with timeout protection
+    const renderPromise = mermaid.render(graphId, codeToRender);
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error("Diagram rendering timed out. The diagram may be too complex.")), 30000);
     });
@@ -181,9 +190,11 @@ export const renderDiagram = async (
     // Safely insert the SVG
     if (svg && element) {
       element.innerHTML = svg;
+      // Force immediate DOM update and repaint
+      void element.offsetHeight; // Trigger reflow
     }
   } catch (error) {
-    console.error("Mermaid rendering error:", error);
+    logger.error("Mermaid rendering error", error);
 
     // Provide a clean, user-friendly error
     if (error instanceof Error) {
@@ -205,7 +216,7 @@ export const clearDiagram = (elementId: string): void => {
       element.innerHTML = "";
     }
   } catch (error) {
-    console.error("Failed to clear diagram:", error);
+    logger.error("Failed to clear diagram", error);
   }
 };
 

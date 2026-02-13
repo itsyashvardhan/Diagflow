@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AppSettings, MermaidTheme } from "@/types/diagflow";
+import { AppSettings, MermaidTheme } from "@/types/diagflo";
 import { ExternalLink } from "lucide-react";
 
 interface SettingsModalProps {
@@ -39,7 +39,7 @@ export function SettingsModal({ open, onOpenChange, settings, onSave }: Settings
         <DialogHeader>
           <DialogTitle className="gradient-text text-2xl">Settings</DialogTitle>
           <DialogDescription>
-            Configure your Diagflow experience
+            Configure your Diagflo experience
           </DialogDescription>
         </DialogHeader>
 
@@ -60,7 +60,7 @@ export function SettingsModal({ open, onOpenChange, settings, onSave }: Settings
             <p className="text-xs text-muted-foreground">
               Get your API key from{" "}
               <a
-                href="https://makersuite.google.com/app/apikey"
+                href="https://aistudio.google.com/app/api-keys"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline inline-flex items-center gap-1"

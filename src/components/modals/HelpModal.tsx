@@ -39,7 +39,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg glass-panel border-white/10">
         <DialogHeader>
-          <DialogTitle className="text-xl gradient-text">Getting Started with Diagflow</DialogTitle>
+          <DialogTitle className="text-xl gradient-text">Getting Started with Diagflo</DialogTitle>
           <DialogDescription>
             Follow these quick steps to create your first diagram
           </DialogDescription>

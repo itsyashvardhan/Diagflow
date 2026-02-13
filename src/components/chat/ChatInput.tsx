@@ -2,7 +2,7 @@ import { useState, useRef, KeyboardEvent, ClipboardEvent, ChangeEvent, DragEvent
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send, Sparkles, X, Upload } from "lucide-react";
-import { Attachment } from "@/types/diagflow";
+import { Attachment } from "@/types/diagflo";
 import { useToast } from "@/hooks/use-toast";
 import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
 
@@ -218,18 +218,18 @@ export function ChatInput({
 
   return (
     <div
-      className={`glass-panel p-4 space-y-3 relative transition-all duration-200 ${isDragOver ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
-        }`}
+      className={`glass-panel p-4 space-y-4 relative transition-all duration-300 rounded-3xl ${isDragOver ? "ring-2 ring-primary/50 shadow-2xl shadow-primary/10" : "shadow-lg"
+        } focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)]`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="absolute inset-0 bg-primary/10 backdrop-blur-sm rounded-lg z-10 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 bg-primary/5 premium-blur rounded-3xl z-10 flex items-center justify-center pointer-events-none ring-2 ring-primary/30">
           <div className="flex flex-col items-center gap-2 text-primary">
-            <Upload className="w-8 h-8 animate-bounce" />
-            <span className="font-medium">Drop images here</span>
+            <Upload className="w-8 h-8 animate-bounce opacity-80" />
+            <span className="text-sm font-bold tracking-tight">Drop images here</span>
           </div>
         </div>
       )}
@@ -241,25 +241,25 @@ export function ChatInput({
         onPaste={handlePaste}
         placeholder={placeholder}
         disabled={disabled}
-        className="min-h-[100px] bg-background/50 border-white/10 resize-none"
+        className="min-h-[90px] bg-transparent border-none focus-visible:ring-0 resize-none p-0 text-[15px] leading-relaxed placeholder:text-muted-foreground/40"
       />
 
       {attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5 pt-2 border-t border-white/5">
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="relative group rounded-lg overflow-hidden border border-border/60 bg-background/60"
+              className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/20"
             >
               <img
                 src={attachment.dataUrl}
                 alt={attachment.name}
-                className="h-20 w-20 object-cover"
+                className="h-20 w-20 object-cover opacity-90 group-hover:opacity-100 transition-opacity"
               />
               <button
                 type="button"
                 onClick={() => removeAttachment(attachment.id)}
-                className="absolute top-1 right-1 rounded-full bg-background/80 p-1 text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 rounded-full bg-black/60 backdrop-blur-md p-1.5 text-white opacity-0 group-hover:opacity-100 transition-all scale-90 hover:scale-100"
                 aria-label={`Remove ${attachment.name}`}
               >
                 <X className="h-3 w-3" />
@@ -269,71 +269,77 @@ export function ChatInput({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/png,image/jpeg"
-          className="hidden"
-          multiple
-          onChange={handleFilePick}
-        />
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <div className="flex items-center gap-1.5">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg"
+            className="hidden"
+            multiple
+            onChange={handleFilePick}
+          />
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="flex-shrink-0"
-          onClick={() => {
-            if (!GEMINI_SUPPORTS_IMAGE_INPUT) {
-              toast({
-                title: "Image attachments unavailable",
-                description: "Current Gemini model does not accept images. Use a Flash or Vision variant.",
-                variant: "destructive",
-              });
-              return;
-            }
-            fileInputRef.current?.click();
-          }}
-          title={GEMINI_SUPPORTS_IMAGE_INPUT ? "Attach image (or drag & drop)" : "Model does not support images"}
-        >
-          <Paperclip className="w-4 h-4 mr-2" />
-          Attach
-        </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9 px-3 rounded-full hover:bg-white/5 transition-colors"
+            onClick={() => {
+              if (!GEMINI_SUPPORTS_IMAGE_INPUT) {
+                toast({
+                  title: "Image attachments unavailable",
+                  description: "Current Gemini model does not accept images.",
+                  variant: "destructive",
+                });
+                return;
+              }
+              fileInputRef.current?.click();
+            }}
+            aria-label="Attach image"
+          >
+            <Paperclip className="w-4 h-4 mr-2 opacity-60" />
+            <span className="text-xs font-semibold">Attach</span>
+          </Button>
 
-        <Button
-          onClick={() => {
-            if (hasApiKey) {
-              onShowExamples();
-            } else {
-              onOpenSettings();
-            }
-          }}
-          variant="outline"
-          size="sm"
-          className="flex-shrink-0"
-          title={hasApiKey ? "Examples" : "Set API Key"}
-        >
-          <Sparkles className="w-4 h-4 mr-2" />
-          {hasApiKey ? "Examples" : "Set API Key"}
-        </Button>
+          <Button
+            onClick={() => {
+              if (hasApiKey) {
+                onShowExamples();
+              } else {
+                onOpenSettings();
+              }
+            }}
+            variant="ghost"
+            size="sm"
+            className="h-9 px-3 rounded-full hover:bg-white/5 transition-colors"
+          >
+            <Sparkles className="w-4 h-4 mr-2 opacity-60 text-primary" />
+            <span className="text-xs font-semibold">{hasApiKey ? "Examples" : "API Key"}</span>
+          </Button>
+        </div>
 
-        <Button
-          onClick={handleSend}
-          disabled={(input.trim().length === 0 && attachments.length === 0) || disabled}
-          className="ml-auto hover-glow"
-        >
-          <Send className="w-4 h-4 mr-2" />
-          Send
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] font-bold text-muted-foreground/60 tracking-tight">
+              ⌘
+            </kbd>
+            <span className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-widest">
+              Enter to send
+            </span>
+          </div>
+
+          <Button
+            onClick={handleSend}
+            disabled={(input.trim().length === 0 && attachments.length === 0) || disabled}
+            className="h-9 px-5 rounded-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all active:scale-95"
+            aria-label="Send message"
+          >
+            <Send className="w-3.5 h-3.5 mr-2" />
+            <span className="text-xs font-bold uppercase tracking-wider">Send</span>
+          </Button>
+        </div>
       </div>
-
-      <p className="text-xs text-muted-foreground">
-        Press <kbd className="px-2 py-0.5 bg-muted rounded text-xs">⌘ + Enter</kbd> to send
-        {GEMINI_SUPPORTS_IMAGE_INPUT && (
-          <span className="ml-2">• Drag & drop or paste images</span>
-        )}
-      </p>
     </div>
   );
 }
