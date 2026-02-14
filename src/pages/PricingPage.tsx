@@ -38,10 +38,8 @@ const PricingPage = () => {
 
             setJoinedWaitlist(true);
             setEmail("");
-        } catch (error) {
-            console.error('Error joining waitlist:', error);
-            // Even if it fails (e.g. duplicate), we show success to the user for better UX
-            // or we could show a specific error. For now, let's assume success/idempotency.
+        } catch {
+            // Supabase may throw on duplicate emails — treat as idempotent success
             setJoinedWaitlist(true);
         } finally {
             setLoading(false);

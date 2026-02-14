@@ -64,6 +64,7 @@ export const storage = {
   // Settings
   getSettings: (): AppSettings => {
     return safeJsonParse<AppSettings>(safeGetItem(STORAGE_KEYS.SETTINGS), {
+      modelProvider: "nvidia",
       theme: "default",
       autoSave: true,
       animations: true,

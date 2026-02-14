@@ -31,6 +31,7 @@ export interface DiagramHistoryEntry {
 
 export interface AppSettings {
   geminiApiKey?: string;
+  modelProvider: "gemini" | "nvidia";
   theme: "default" | "forest" | "dark" | "neutral";
   autoSave: boolean;
   animations: boolean;

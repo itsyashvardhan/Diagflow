@@ -5,6 +5,7 @@ import { Paperclip, Send, Sparkles, X, Upload } from "lucide-react";
 import { Attachment } from "@/types/diagflo";
 import { useToast } from "@/hooks/use-toast";
 import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
+import { ModelSelector } from "./ModelSelector";
 
 interface ChatInputProps {
   onSend: (message: string, attachments: Attachment[]) => void;
@@ -13,6 +14,8 @@ interface ChatInputProps {
   hasApiKey: boolean;
   disabled?: boolean;
   placeholder?: string;
+  modelProvider: "gemini" | "nvidia";
+  onModelChange: (model: "gemini" | "nvidia") => void;
 }
 
 export function ChatInput({
@@ -22,6 +25,8 @@ export function ChatInput({
   hasApiKey,
   disabled,
   placeholder = "Describe your system architecture...",
+  modelProvider,
+  onModelChange,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -218,7 +223,7 @@ export function ChatInput({
 
   return (
     <div
-      className={`glass-panel p-4 space-y-4 relative transition-all duration-300 rounded-3xl ${isDragOver ? "ring-2 ring-primary/50 shadow-2xl shadow-primary/10" : "shadow-lg"
+      className={`glass-panel p-2.5 sm:p-4 space-y-2 sm:space-y-4 relative transition-all duration-300 rounded-2xl sm:rounded-3xl ${isDragOver ? "ring-2 ring-primary/50 shadow-2xl shadow-primary/10" : "shadow-lg"
         } focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)]`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -241,7 +246,7 @@ export function ChatInput({
         onPaste={handlePaste}
         placeholder={placeholder}
         disabled={disabled}
-        className="min-h-[90px] bg-transparent border-none focus-visible:ring-0 resize-none p-0 text-[15px] leading-relaxed placeholder:text-muted-foreground/40"
+        className="min-h-[60px] sm:min-h-[90px] bg-transparent border-none focus-visible:ring-0 resize-none p-0 text-[13px] sm:text-[15px] leading-relaxed placeholder:text-muted-foreground/40"
       />
 
       {attachments.length > 0 && (
@@ -304,7 +309,7 @@ export function ChatInput({
 
           <Button
             onClick={() => {
-              if (hasApiKey) {
+              if (hasApiKey || modelProvider === "nvidia") {
                 onShowExamples();
               } else {
                 onOpenSettings();
@@ -315,8 +320,15 @@ export function ChatInput({
             className="h-9 px-3 rounded-full hover:bg-white/5 transition-colors"
           >
             <Sparkles className="w-4 h-4 mr-2 opacity-60 text-primary" />
-            <span className="text-xs font-semibold">{hasApiKey ? "Examples" : "API Key"}</span>
+            <span className="text-xs font-semibold">{(hasApiKey || modelProvider === "nvidia") ? "Examples" : "API Key"}</span>
           </Button>
+
+          <div className="w-px h-4 bg-white/10 mx-1" />
+
+          <ModelSelector
+            value={modelProvider}
+            onValueChange={onModelChange}
+          />
         </div>
 
         <div className="flex items-center gap-4">

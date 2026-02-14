@@ -106,13 +106,13 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
 
   return (
     <div
-      className={`flex gap-4 mb-6 ${isUser ? "justify-end" : "justify-start"}`}
+      className={`flex gap-2 sm:gap-4 mb-3 sm:mb-6 ${isUser ? "justify-end" : "justify-start"}`}
     >
-      <div className={`max-w-[85%] ${isUser ? "items-end" : "items-start"} flex flex-col`}>
+      <div className={`max-w-[90%] sm:max-w-[85%] ${isUser ? "items-end" : "items-start"} flex flex-col`}>
         {hasContent && (
           <div
             className={`
-              px-4 py-3 rounded-2xl
+              px-3 py-2 sm:px-4 sm:py-3 rounded-2xl
               transition-all duration-200
               ${isUser
                 ? "bg-[#3478F6] text-white rounded-br-md shadow-sm"
@@ -122,7 +122,7 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
             `}
           >
             {isUser ? (
-              <p className="text-[15px] leading-relaxed whitespace-pre-wrap font-normal">
+              <p className="text-[13px] sm:text-[15px] leading-relaxed whitespace-pre-wrap font-normal">
                 {message.content}
               </p>
             ) : (
@@ -135,7 +135,7 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
                   prose-code:text-blue-300 prose-code:bg-white/[0.06] 
                   prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-normal
                   prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
-                  text-[15px]"
+                  text-[13px] sm:text-[15px]"
               >
                 <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>

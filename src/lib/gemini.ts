@@ -301,7 +301,7 @@ export async function generateDiagram(
   throw lastError || new Error("Failed to generate diagram after multiple attempts");
 }
 
-function parseDiagramResponse(text: string): DiagramResponse {
+export function parseDiagramResponse(text: string): DiagramResponse {
   const sections = {
     explanation: "",
     code: "",

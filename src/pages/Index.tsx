@@ -325,15 +325,6 @@ const Index = () => {
   }, [historyIndex, diagramHistory]);
 
   const handleSendMessage = async (content: string, attachments: Attachment[] = []) => {
-    if (!settings.geminiApiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please add your Gemini API key in settings",
-        variant: "destructive",
-      });
-      setShowSettings(true);
-      return;
-    }
 
     if (attachments.length > 0 && !GEMINI_SUPPORTS_IMAGE_INPUT) {
       toast({
@@ -369,27 +360,61 @@ const Index = () => {
     };
 
     try {
-      const response = await generateDiagram(
-        settings.geminiApiKey,
-        content,
-        currentDiagram,
-        updatedHistory,
-        // onRetry callback - called when rate limited and retrying
-        (retryInfo) => {
-          updateMessageStatus({
-            status: "queued",
-            retryAttempt: retryInfo.attempt,
-            estimatedWaitSeconds: retryInfo.estimatedWaitSeconds,
-            queueReason: retryInfo.reason,
-          });
+      let response;
 
-          // Show a gentle toast notification
+      if (settings.modelProvider === "nvidia") {
+        const { generateDiagramNvidia } = await import("@/lib/nvidia");
+        response = await generateDiagramNvidia(
+          content,
+          currentDiagram,
+          updatedHistory,
+          (retryInfo) => {
+            updateMessageStatus({
+              status: "queued",
+              retryAttempt: retryInfo.attempt,
+              estimatedWaitSeconds: retryInfo.estimatedWaitSeconds,
+              queueReason: retryInfo.reason,
+            });
+
+            toast({
+              title: retryInfo.reason,
+              description: `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries} • Wait ~${retryInfo.estimatedWaitSeconds}s`,
+            });
+          }
+        );
+      } else {
+        if (!settings.geminiApiKey) {
           toast({
-            title: retryInfo.reason,
-            description: `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries} • Wait ~${retryInfo.estimatedWaitSeconds}s`,
+            title: "API Key Required",
+            description: "Please add your Gemini API key in settings to use this model",
+            variant: "destructive",
           });
+          setShowSettings(true);
+          setIsGenerating(false);
+          updateMessageStatus({ status: "error" });
+          return;
         }
-      );
+
+        response = await generateDiagram(
+          settings.geminiApiKey,
+          content,
+          currentDiagram,
+          updatedHistory,
+          (retryInfo) => {
+            updateMessageStatus({
+              status: "queued",
+              retryAttempt: retryInfo.attempt,
+              estimatedWaitSeconds: retryInfo.estimatedWaitSeconds,
+              queueReason: retryInfo.reason,
+            });
+
+            toast({
+              title: retryInfo.reason,
+              description: `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries} • Wait ~${retryInfo.estimatedWaitSeconds}s`,
+            });
+          }
+        );
+      }
 
       const assistantMessage: Message = {
         role: "assistant",
@@ -400,14 +425,19 @@ const Index = () => {
         timestamp: Date.now(),
       };
 
-      // Mark user message as sent (success)
-      updateMessageStatus({
+      // Mark user message as sent and build final history
+      const sentUserMessage: Message = {
+        ...userMessage,
         status: "sent",
         retryAttempt: undefined,
-        estimatedWaitSeconds: undefined
-      });
+        estimatedWaitSeconds: undefined,
+      };
 
-      const finalHistory = [...messages, { ...userMessage, status: "sent" as const }, assistantMessage];
+      const finalHistory = [
+        ...messages,
+        sentUserMessage,
+        assistantMessage,
+      ];
       setMessages(finalHistory);
       setCurrentDiagram(response.code);
 
@@ -845,6 +875,8 @@ const Index = () => {
               onOpenSettings={() => setShowSettings(true)}
               hasApiKey={Boolean(settings.geminiApiKey)}
               disabled={isGenerating}
+              modelProvider={settings.modelProvider}
+              onModelChange={(model) => handleSaveSettings({ ...settings, modelProvider: model })}
             />
           </div>
         </div>
