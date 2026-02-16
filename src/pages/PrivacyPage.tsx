@@ -106,11 +106,11 @@ const PrivacyPage = () => {
         <Section title="Contact">
           <p>
             For privacy questions, contact us via{" "}
-            <a href="https://x.com/_yashvs" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">
-              @_yashvs on X
+            <a href="https://linkedin.com/in/yashvardhan04" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">
+              LinkedIn
             </a>{" "}
             or open an issue on our{" "}
-            <a href="https://github.com/itsyashvardhan" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">
+            <a href="https://github.com/itsyashvardhan/diagflo" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">
               GitHub
             </a>.
           </p>

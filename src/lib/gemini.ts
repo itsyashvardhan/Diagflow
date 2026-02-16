@@ -1,6 +1,6 @@
 
 import { logger } from "./logger";
-import { Message, DiagramResponse } from "@/types/diagflo";
+import { Message, DiagramResponse, AppSettings, RetryCallback } from "@/types/diagflo";
 
 // Default system prompt for Gemini
 const SYSTEM_PROMPT = `You are Diagflo, an expert system diagram assistant. Generate clear, accurate diagrams in Mermaid or Chart.js DSL as requested. Always explain your reasoning and suggest enhancements if possible.`;
@@ -42,6 +42,12 @@ function parseRetryAfter(header: string | null): number {
   return 2000;
 }
 
+const RATE_LIMIT_CONFIG = {
+  maxRetries: 3,              // Maximum number of retry attempts
+  baseDelayMs: 1000,          // Initial delay before first retry (1 second)
+  maxDelayMs: 32000,          // Maximum delay cap (32 seconds)
+};
+
 // Helper: exponential backoff delay
 function calculateBackoffDelay(attempt: number): number {
   const delay = RATE_LIMIT_CONFIG.baseDelayMs * Math.pow(2, attempt);
@@ -57,15 +63,7 @@ function extractErrorMessage(errorBody: any): string {
   return JSON.stringify(errorBody);
 }
 
-export const GEMINI_MODEL = "gemini-2.5-flash-lite";
 export const GEMINI_SUPPORTS_IMAGE_INPUT = true;
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-const RATE_LIMIT_CONFIG = {
-  maxRetries: 3,              // Maximum number of retry attempts
-  baseDelayMs: 1000,          // Initial delay before first retry (1 second)
-  maxDelayMs: 32000,          // Maximum delay cap (32 seconds)
-};
 
 type GeminiPart =
   | { text: string }
@@ -76,15 +74,9 @@ type GeminiContent = {
   parts: GeminiPart[];
 };
 
-export type RetryCallback = (info: {
-  attempt: number;
-  maxRetries: number;
-  estimatedWaitSeconds: number;
-  reason: "High demand, retrying..." | "Server busy, retrying..." | "Connection issue, retrying...";
-}) => void;
-
 export async function generateDiagram(
   apiKey: string,
+  model: AppSettings["geminiModel"],
   userPrompt: string,
   currentDiagram: string,
   chatHistory: Message[],
@@ -93,6 +85,8 @@ export async function generateDiagram(
   if (!apiKey) {
     throw new Error("API key is required");
   }
+
+  const apiURL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
   // Enforce minimum request interval to prevent rapid-fire requests
   await enforceRequestInterval();
@@ -185,7 +179,7 @@ export async function generateDiagram(
 
   for (let attempt = 0; attempt <= RATE_LIMIT_CONFIG.maxRetries; attempt++) {
     try {
-      const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      const response = await fetch(`${apiURL}?key=${apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

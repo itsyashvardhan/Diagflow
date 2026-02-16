@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { Linkedin } from "lucide-react";
+import { BugIcon, GithubIcon, Linkedin, MicIcon } from "lucide-react";
 import { useCanonical } from "@/hooks/use-canonical";
 import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
+import { Portal } from "@radix-ui/react-tooltip";
 
 // Modern X (formerly Twitter) logo component
 const XLogo = ({ className }: { className?: string }) => (
@@ -380,13 +381,13 @@ const LandingPage = () => {
           {/* Social Links */}
           <div className="flex items-center gap-3">
             <a
-              href="https://x.com/_yashvs"
+              href="https://github.com/itsyashvardhan/diagflo"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Follow on X"
+              aria-label="GitHub"
               className={`p-2 rounded-lg transition-all hover:scale-110 ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-[#111]'}`}
             >
-              <XLogo className="w-5 h-5" />
+              <GithubIcon className="w-5 h-5" aria-hidden="true" />
             </a>
             <a
               href="https://www.linkedin.com/company/diagflo"

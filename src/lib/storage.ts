@@ -63,13 +63,20 @@ export const storage = {
 
   // Settings
   getSettings: (): AppSettings => {
-    return safeJsonParse<AppSettings>(safeGetItem(STORAGE_KEYS.SETTINGS), {
+    const parsed = safeJsonParse<AppSettings>(safeGetItem(STORAGE_KEYS.SETTINGS), {
       modelProvider: "nvidia",
+      geminiModel: "gemini-2.5-flash-lite",
+      nvidiaModel: "nvidia/nemotron-nano-12b-v2-vl",
       theme: "default",
       autoSave: true,
       animations: true,
       helpPanelDismissed: false,
     });
+    return {
+      ...parsed,
+      geminiModel: "gemini-2.5-flash-lite",
+      nvidiaModel: "nvidia/nemotron-nano-12b-v2-vl",
+    };
   },
 
   saveSettings: (settings: AppSettings) => {

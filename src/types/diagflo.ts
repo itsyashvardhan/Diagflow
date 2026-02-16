@@ -32,6 +32,8 @@ export interface DiagramHistoryEntry {
 export interface AppSettings {
   geminiApiKey?: string;
   modelProvider: "gemini" | "nvidia";
+  geminiModel: "gemini-2.5-flash-lite";
+  nvidiaModel: "nvidia/nemotron-nano-12b-v2-vl";
   theme: "default" | "forest" | "dark" | "neutral";
   autoSave: boolean;
   animations: boolean;

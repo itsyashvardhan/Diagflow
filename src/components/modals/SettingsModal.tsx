@@ -44,84 +44,133 @@ export function SettingsModal({ open, onOpenChange, settings, onSave }: Settings
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* API Key */}
-          <div className="space-y-2">
-            <Label htmlFor="apiKey">Gemini API Key</Label>
-            <Input
-              id="apiKey"
-              type="password"
-              placeholder="Enter your API key..."
-              value={localSettings.geminiApiKey || ""}
-              onChange={(e) =>
-                setLocalSettings({ ...localSettings, geminiApiKey: e.target.value })
-              }
-              className="bg-background/50"
-            />
-            <p className="text-xs text-muted-foreground">
-              Get your API key from{" "}
-              <a
-                href="https://aistudio.google.com/app/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline inline-flex items-center gap-1"
+          {/* Model Provider */}
+          <div className="space-y-4 pt-2 border-t border-white/5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="modelProvider" className="font-semibold text-primary">Model Provider</Label>
+              <div className="flex bg-white/5 p-0.5 rounded-lg border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setLocalSettings({ ...localSettings, modelProvider: "gemini" })}
+                  className={`px-3 py-1 text-xs rounded-md transition-all ${localSettings.modelProvider === "gemini"
+                      ? "bg-white/10 text-white border border-white/10 shadow-sm"
+                      : "text-muted-foreground hover:text-white"
+                    }`}
+                >
+                  Gemini
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocalSettings({ ...localSettings, modelProvider: "nvidia" })}
+                  className={`px-3 py-1 text-xs rounded-md transition-all ${localSettings.modelProvider === "nvidia"
+                      ? "bg-white/10 text-white border border-white/10 shadow-sm"
+                      : "text-muted-foreground hover:text-white"
+                    }`}
+                >
+                  NVIDIA
+                </button>
+              </div>
+            </div>
+
+            {localSettings.modelProvider === "gemini" ? (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* <div className="space-y-2">
+                  <Label>Gemini Model</Label>
+                  <div className="rounded-md border border-white/10 bg-background/50 px-3 py-2 text-sm text-foreground/90">
+                    gemini-2.5-flash-lit
+                  </div>
+                </div> */}
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">API Key (saved locally)</Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    placeholder="Enter your API key..."
+                    value={localSettings.geminiApiKey || ""}
+                    onChange={(e) =>
+                      setLocalSettings({ ...localSettings, geminiApiKey: e.target.value })
+                    }
+                    className="bg-background/50 border-white/5 focus:border-primary/50"
+                  />
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Get your key from{" "}
+                    <a
+                      href="https://aistudio.google.com/app/api-keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline inline-flex items-center gap-0.5"
+                    >
+                      Google AI Studio
+                      <ExternalLink className="w-2 h-2" />
+                    </a>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="space-y-2">
+                  <Label>NVIDIA Model</Label>
+                  <div className="rounded-md border border-white/10 bg-background/50 px-3 py-2 text-sm text-foreground/90">
+                    nvidia/nemotron
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4 pt-2 border-t border-white/5">
+            {/* Theme */}
+            <div className="space-y-2">
+              <Label htmlFor="theme">Diagram Appearance</Label>
+              <Select
+                value={localSettings.theme}
+                onValueChange={(value: MermaidTheme) =>
+                  setLocalSettings({ ...localSettings, theme: value })
+                }
               >
-                Google AI Studio
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </p>
-          </div>
-
-          {/* Theme */}
-          <div className="space-y-2">
-            <Label htmlFor="theme">Diagram Theme</Label>
-            <Select
-              value={localSettings.theme}
-              onValueChange={(value: MermaidTheme) =>
-                setLocalSettings({ ...localSettings, theme: value })
-              }
-            >
-              <SelectTrigger id="theme" className="bg-background/50">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="forest">Forest</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="neutral">Neutral</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Auto Save */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Auto Save</Label>
-              <p className="text-xs text-muted-foreground">
-                Automatically save diagrams to history
-              </p>
+                <SelectTrigger id="theme" className="bg-background/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Modern Default</SelectItem>
+                  <SelectItem value="forest">Natural Forest</SelectItem>
+                  <SelectItem value="dark">Pure Dark</SelectItem>
+                  <SelectItem value="neutral">Classic Neutral</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Switch
-              checked={localSettings.autoSave}
-              onCheckedChange={(checked) =>
-                setLocalSettings({ ...localSettings, autoSave: checked })
-              }
-            />
-          </div>
 
-          {/* Animations */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Animations</Label>
-              <p className="text-xs text-muted-foreground">
-                Enable smooth transitions and effects
-              </p>
+            {/* Auto Save */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-sm">History Auto-Save</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Keep a history of all generated versions
+                </p>
+              </div>
+              <Switch
+                checked={localSettings.autoSave}
+                onCheckedChange={(checked) =>
+                  setLocalSettings({ ...localSettings, autoSave: checked })
+                }
+              />
             </div>
-            <Switch
-              checked={localSettings.animations}
-              onCheckedChange={(checked) =>
-                setLocalSettings({ ...localSettings, animations: checked })
-              }
-            />
+
+            {/* Animations */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-sm">Interface Animations</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Enable smooth UX transitions
+                </p>
+              </div>
+              <Switch
+                checked={localSettings.animations}
+                onCheckedChange={(checked) =>
+                  setLocalSettings({ ...localSettings, animations: checked })
+                }
+              />
+            </div>
           </div>
         </div>
 

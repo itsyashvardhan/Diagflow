@@ -59,17 +59,18 @@ const Index = () => {
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Chat column sizing (resizable, max 40% of viewport)
-  const MIN_CHAT_WIDTH = 320; // px - ensures usability of chat input
+  // Chat column sizing (resizable between 33% and 40% of viewport)
+  const MIN_CHAT_WIDTH_RATIO = 0.33;
+  const getMinChatWidth = () => Math.floor(window.innerWidth * MIN_CHAT_WIDTH_RATIO);
   const [chatWidth, setChatWidth] = useState<number>(() => {
     try {
       const saved = localStorage.getItem("diagflo:chatWidth");
       if (saved) {
         return Number(saved);
       }
-      // Default to 33% of the viewport width (respecting MIN_CHAT_WIDTH)
+      // Default to 33% of the viewport width
       if (typeof window !== "undefined") {
-        return Math.max(MIN_CHAT_WIDTH, Math.floor(window.innerWidth * 0.33));
+        return Math.floor(window.innerWidth * MIN_CHAT_WIDTH_RATIO);
       }
       return 400;
     } catch {
@@ -83,8 +84,9 @@ const Index = () => {
 
   // Helper to clamp width to [MIN_CHAT_WIDTH, 40vw]
   const clampWidth = (w: number) => {
-    const max = Math.floor(window.innerWidth * 0.4);
-    return Math.max(MIN_CHAT_WIDTH, Math.min(w, max));
+    const min = getMinChatWidth();
+    const max = Math.floor(window.innerWidth * 0.5);
+    return Math.max(min, Math.min(w, max));
   };
 
   useEffect(() => {
@@ -397,6 +399,7 @@ const Index = () => {
 
         response = await generateDiagram(
           settings.geminiApiKey,
+          settings.geminiModel,
           content,
           currentDiagram,
           updatedHistory,
@@ -776,7 +779,7 @@ const Index = () => {
               variant="ghost"
               size="icon"
               onClick={() => setShowCredits(true)}
-              className="w-8 h-8 rounded-full hover:bg-white/5 transition-all text-muted-foreground/50 hover:text-foreground"
+              className="w-8 h-8 rounded-full hover:bg-white/5 transition-all hover:text-foreground"
               title="Credits & GitHub"
             >
               <Github className="w-3.5 h-3.5" />
@@ -812,7 +815,7 @@ const Index = () => {
         <div
           style={{
             width: isMobile ? '100%' : `${chatWidth}px`,
-            minWidth: isMobile ? '100%' : '320px',
+            minWidth: isMobile ? '100%' : `${Math.floor(window.innerWidth * MIN_CHAT_WIDTH_RATIO)}px`,
             display: isMobile && mobileView !== 'chat' ? 'none' : 'flex'
           }}
           className={`flex-col border-b lg:border-b-0 lg:border-r border-white/5 shrink-0 transition-[width] duration-300 ${isMobile ? 'pb-[60px]' : ''}`}

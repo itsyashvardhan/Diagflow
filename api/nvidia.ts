@@ -16,18 +16,18 @@ const HIGH_LOAD_THRESHOLD = 30;
 let requestTimestamps: number[] = [];
 
 function checkRateLimit(): { allowed: boolean; highLoad: boolean; retryAfter?: number } {
-    const now = Date.now();
-    requestTimestamps = requestTimestamps.filter(t => now - t < WINDOW_SIZE_MS);
+  const now = Date.now();
+  requestTimestamps = requestTimestamps.filter(t => now - t < WINDOW_SIZE_MS);
 
-    if (requestTimestamps.length >= HARD_LIMIT) {
-        const oldestInWindow = requestTimestamps[0];
-        const retryAfter = Math.ceil((WINDOW_SIZE_MS - (now - oldestInWindow)) / 1000);
-        return { allowed: false, highLoad: true, retryAfter };
-    }
+  if (requestTimestamps.length >= HARD_LIMIT) {
+    const oldestInWindow = requestTimestamps[0];
+    const retryAfter = Math.ceil((WINDOW_SIZE_MS - (now - oldestInWindow)) / 1000);
+    return { allowed: false, highLoad: true, retryAfter };
+  }
 
-    const highLoad = requestTimestamps.length >= HIGH_LOAD_THRESHOLD;
-    requestTimestamps.push(now);
-    return { allowed: true, highLoad };
+  const highLoad = requestTimestamps.length >= HIGH_LOAD_THRESHOLD;
+  requestTimestamps.push(now);
+  return { allowed: true, highLoad };
 }
 
 // Identical system prompt to api/gemini.ts
@@ -209,7 +209,7 @@ Your mission:
    - Every node referenced in links MUST be defined first (e.g., \`A --> B\` requires both A and B to exist)
    - Use \`<br/>\` for line breaks in node labels, NOT \`\\n\` (e.g., \`A["Line 1<br/>Line 2"]\`)
    - \`linkStyle\` format: \`linkStyle N stroke:#color,stroke-width:Npx\` — avoid \`stroke-dasharray\` with spaces
-   - For dashed lines, prefer \`-.->\|label\|->\` over complex linkStyle
+   - For dashed lines, prefer \`-.->|label|->\` over complex linkStyle
    - When styling subgraphs, ensure the subgraph ID is simple (no special characters)
    - Avoid Unicode arrows (→, ↑) in labels — use text like "increases" or ASCII arrows
 
@@ -337,94 +337,102 @@ Respond naturally in plain text without the Explanation/Diagram Code structure. 
 Do not include suggestion lists unless the user explicitly asks for them.`;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  if (!API_KEY) {
+    return res.status(500).json({ error: 'NVIDIA_API_KEY not configured' });
+  }
+
+  // 1. Rate Limiting Check
+  const { allowed, highLoad, retryAfter } = checkRateLimit();
+  if (!allowed) {
+    return res.status(429).json({
+      error: 'Rate limit exceeded',
+      message: 'Too many requests. Please try again in ' + retryAfter + 's.',
+      retryAfter
+    });
+  }
+
+  try {
+    const { userPrompt, currentDiagram, chatHistory } = req.body || {};
+    const modelToUse = MODEL_NAME;
+
+    // 2. Transform request to OpenAI format for NVIDIA NIM
+    const messages: any[] = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...(chatHistory || []).slice(-10).map((m: any) => {
+        const content: any[] = [{ type: 'text', text: m.content || '' }];
+
+        if (m.attachments && Array.isArray(m.attachments)) {
+          m.attachments.forEach((att: any) => {
+            if (att.base64) {
+              content.push({
+                type: 'image_url',
+                image_url: { url: `data:${att.mimeType};base64,${att.base64}` }
+              });
+            }
+          });
+        }
+        return { role: m.role === 'assistant' ? 'assistant' : 'user', content };
+      })
+    ];
+
+    // Ensure latest prompt is included if separate
+    if (userPrompt) {
+      messages.push({ role: 'user', content: userPrompt });
     }
 
-    if (!API_KEY) {
-        return res.status(500).json({ error: 'NVIDIA_API_KEY not configured' });
-    }
+    const response = await fetch(NVIDIA_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model: modelToUse,
+        messages,
+        temperature: 0.5,
+        max_tokens: 4096,
+        top_p: 1
+      })
+    });
 
-    // 1. Rate Limiting Check
-    const { allowed, highLoad, retryAfter } = checkRateLimit();
-    if (!allowed) {
-        return res.status(429).json({
-            error: 'Rate limit exceeded',
-            message: 'Too many requests. Please try again in ' + retryAfter + 's.',
-            retryAfter
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('[NIM Proxy Error]', response.status, errText);
+      if (response.status === 404) {
+        return res.status(502).json({
+          error: 'NVIDIA model unavailable',
+          message: `Configured NVIDIA model '${modelToUse}' is not available for this API key/account.`,
+          details: errText
         });
+      }
+      return res.status(response.status).json({ error: 'Upstream NVIDIA error', details: errText });
     }
 
-    try {
-        const { userPrompt, currentDiagram, chatHistory } = req.body || {};
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
 
-        // 2. Transform request to OpenAI format for NVIDIA NIM
-        const messages: any[] = [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...(chatHistory || []).slice(-10).map((m: any) => {
-                const content: any[] = [{ type: 'text', text: m.content || '' }];
-
-                if (m.attachments && Array.isArray(m.attachments)) {
-                    m.attachments.forEach((att: any) => {
-                        if (att.base64) {
-                            content.push({
-                                type: 'image_url',
-                                image_url: { url: `data:${att.mimeType};base64,${att.base64}` }
-                            });
-                        }
-                    });
-                }
-                return { role: m.role === 'assistant' ? 'assistant' : 'user', content };
-            })
-        ];
-
-        // Ensure latest prompt is included if separate
-        if (userPrompt) {
-            messages.push({ role: 'user', content: userPrompt });
-        }
-
-        const response = await fetch(NVIDIA_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${API_KEY}`
-            },
-            body: JSON.stringify({
-                model: MODEL_NAME,
-                messages,
-                temperature: 0.5,
-                max_tokens: 4096,
-                top_p: 1
-            })
-        });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error('[NIM Proxy Error]', response.status, errText);
-            return res.status(response.status).json({ error: 'Upstream NVIDIA error', details: errText });
-        }
-
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content;
-
-        if (!content) {
-            throw new Error('Empty response from NVIDIA NIM');
-        }
-
-        // 3. Return in Gemini-compatible shape for the shared client parser
-        const mockGeminiResponse = {
-            candidates: [{
-                content: {
-                    parts: [{ text: content }]
-                }
-            }]
-        };
-
-        res.setHeader('X-High-Load', highLoad ? 'true' : 'false');
-        return res.status(200).json(mockGeminiResponse);
-
-    } catch (err: any) {
-        console.error('[NIM Proxy Exception]', err);
-        return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    if (!content) {
+      throw new Error('Empty response from NVIDIA NIM');
     }
+
+    // 3. Return in Gemini-compatible shape for the shared client parser
+    const mockGeminiResponse = {
+      candidates: [{
+        content: {
+          parts: [{ text: content }]
+        }
+      }]
+    };
+
+    res.setHeader('X-High-Load', highLoad ? 'true' : 'false');
+    return res.status(200).json(mockGeminiResponse);
+
+  } catch (err: any) {
+    console.error('[NIM Proxy Exception]', err);
+    return res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  }
 }
