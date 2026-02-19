@@ -1,3 +1,4 @@
+```typescript
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -5,6 +6,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         status: 'ok',
         timestamp: new Date().toISOString(),
         env: process.env.NODE_ENV,
+        nodeVersion: process.version,
         hasDbUrl: !!(process.env.NEON_DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_URL)
     });
 }
+```
