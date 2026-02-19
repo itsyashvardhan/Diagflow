@@ -1,11 +1,5 @@
 import { neon } from '@neondatabase/serverless';
 
-type SqlClient = ReturnType<typeof neon>;
-
-declare global {
-  var __diagfloSqlClient: SqlClient | undefined;
-}
-
 function getDatabaseUrl(): string {
   const url = (
     process.env.NEON_DATABASE_URL ||
@@ -15,33 +9,16 @@ function getDatabaseUrl(): string {
   ).trim();
 
   if (!url) {
-    throw new Error('Missing database connection string. Set NEON_DATABASE_URL, POSTGRES_URL or DATABASE_URL.');
+    throw new Error('Missing database connection string.');
   }
-
-  // Log (masked) for debugging purposes in serverless logs
-  try {
-    const parsed = new URL(url);
-    console.log(`[db] Target host: ${parsed.host}`);
-  } catch {
-    console.error('[db] Failed to parse database URL');
-  }
-
   return url;
 }
 
-export function getSqlClient(): SqlClient {
-  if (!global.__diagfloSqlClient) {
-    let url = getDatabaseUrl();
-
-    // the 'neon()' driver from @neondatabase/serverless uses HTTP.
-    // The HTTP proxy is already pooled. Using the Neondb Connection Pooler host (-pooler)
-    // can sometimes cause issues with HTTP routing or certificate validation in some environments.
-    // We'll use the direct host if it's a pooled hostname.
-    if (url.includes('-pooler.')) {
-      url = url.replace('-pooler.', '.');
-    }
-
-    global.__diagfloSqlClient = neon(url);
+export function getSqlClient() {
+  let url = getDatabaseUrl();
+  // Ensure we use the non-pooling endpoint for the HTTP-based 'neon()' driver
+  if (url.includes('-pooler.')) {
+    url = url.replace('-pooler.', '.');
   }
-  return global.__diagfloSqlClient;
+  return neon(url);
 }
