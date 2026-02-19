@@ -16,9 +16,22 @@ function getDatabaseUrl(): string {
 
 export function getSqlClient() {
   let url = getDatabaseUrl();
-  // Ensure we use the non-pooling endpoint for the HTTP-based 'neon()' driver
-  if (url.includes('-pooler.')) {
-    url = url.replace('-pooler.', '.');
+
+  try {
+    // The HTTP-based 'neon()' driver works best with the direct hostname (no -pooler)
+    if (url.includes('-pooler.')) {
+      url = url.replace('-pooler.', '.');
+    }
+
+    // Strip parameters that might cause issues with the HTTP proxy
+    // especially channel_binding=require which is for TCP pooling
+    const urlObj = new URL(url);
+    urlObj.searchParams.delete('channel_binding');
+    url = urlObj.toString();
+  } catch (err) {
+    // If URL parsing fails, we fallback to the original URL but it might crash later
+    console.error('[db] URL sanitization failed', err);
   }
+
   return neon(url);
 }
