@@ -41,15 +41,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const sql = getSqlClient();
-    const insertedResult = await sql`
+    const existingResult = await sql`
+      SELECT email
+      FROM public.waitlist
+      WHERE lower(email) = lower(${email})
+      LIMIT 1
+    `;
+    const existing = Array.isArray(existingResult) ? (existingResult as Array<{ email: string }>) : [];
+
+    if (existing.length > 0) {
+      res.status(200).json({ ok: true, inserted: false });
+      return;
+    }
+
+    await sql`
       INSERT INTO public.waitlist (email)
       VALUES (${email})
-      ON CONFLICT (email) DO NOTHING
-      RETURNING email
     `;
-    const inserted = Array.isArray(insertedResult) ? (insertedResult as Array<{ email: string }>) : [];
 
-    res.status(200).json({ ok: true, inserted: inserted.length > 0 });
+    res.status(200).json({ ok: true, inserted: true });
   } catch (error) {
     console.error('[api/waitlist] Request failed', error);
     if (error instanceof Error && /Missing database connection string/i.test(error.message)) {

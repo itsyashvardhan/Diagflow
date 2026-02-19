@@ -61,6 +61,19 @@ function generateShareId(): string {
   return `${segment()}-${segment()}-${segment()}`;
 }
 
+async function tableHasColumn(tableName: string, columnName: string): Promise<boolean> {
+  const sql = getSqlClient();
+  const result = await sql`
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = ${tableName}
+      AND column_name = ${columnName}
+    LIMIT 1
+  `;
+  return Array.isArray(result) && result.length > 0;
+}
+
 async function handleCreate(req: VercelRequest, res: VercelResponse) {
   const body = parseBody<{ code?: unknown; title?: unknown }>(req);
   if (typeof body.code !== 'string' || !body.code.trim()) {
@@ -74,6 +87,7 @@ async function handleCreate(req: VercelRequest, res: VercelResponse) {
 
   const sql = getSqlClient();
   const title = normalizeTitle(body.title);
+  const hasTitleColumn = await tableHasColumn('shared_diagrams', 'title');
 
   const existingResult = await sql`
     SELECT id
@@ -89,18 +103,31 @@ async function handleCreate(req: VercelRequest, res: VercelResponse) {
 
   for (let attempt = 0; attempt < 8; attempt++) {
     const id = generateShareId();
-    const insertedResult = await sql`
-      INSERT INTO public.shared_diagrams (id, code, title)
-      VALUES (${id}, ${body.code}, ${title})
-      ON CONFLICT (id) DO NOTHING
-      RETURNING id
+    const collisionCheck = await sql`
+      SELECT id
+      FROM public.shared_diagrams
+      WHERE id = ${id}
+      LIMIT 1
     `;
-    const inserted = Array.isArray(insertedResult) ? (insertedResult as Array<{ id: string }>) : [];
-
-    if (inserted.length > 0) {
-      res.status(201).json({ id: inserted[0].id });
-      return;
+    const collision = Array.isArray(collisionCheck) ? (collisionCheck as Array<{ id: string }>) : [];
+    if (collision.length > 0) {
+      continue;
     }
+
+    if (hasTitleColumn) {
+      await sql`
+        INSERT INTO public.shared_diagrams (id, code, title)
+        VALUES (${id}, ${body.code}, ${title})
+      `;
+    } else {
+      await sql`
+        INSERT INTO public.shared_diagrams (id, code)
+        VALUES (${id}, ${body.code})
+      `;
+    }
+
+    res.status(201).json({ id });
+    return;
   }
 
   sendError(res, 500, 'Failed to allocate a unique share ID. Please retry.');
@@ -114,15 +141,51 @@ async function handleRead(req: VercelRequest, res: VercelResponse) {
   }
 
   const sql = getSqlClient();
-  const rowsResult = await sql`
-    SELECT id, code, title, created_at
-    FROM public.shared_diagrams
-    WHERE id = ${id}
-    LIMIT 1
-  `;
-  const rows = Array.isArray(rowsResult)
-    ? (rowsResult as Array<{ id: string; code: string; title: string | null; created_at: string | Date }>)
-    : [];
+  const hasTitleColumn = await tableHasColumn('shared_diagrams', 'title');
+  const hasCreatedAtColumn = await tableHasColumn('shared_diagrams', 'created_at');
+
+  let rows: Array<{ id: string; code: string; title: string | null; created_at?: string | Date }> = [];
+  if (hasTitleColumn && hasCreatedAtColumn) {
+    const rowsResult = await sql`
+      SELECT id, code, title, created_at
+      FROM public.shared_diagrams
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    rows = Array.isArray(rowsResult)
+      ? (rowsResult as Array<{ id: string; code: string; title: string | null; created_at: string | Date }>)
+      : [];
+  } else if (hasTitleColumn) {
+    const rowsResult = await sql`
+      SELECT id, code, title
+      FROM public.shared_diagrams
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    rows = Array.isArray(rowsResult)
+      ? (rowsResult as Array<{ id: string; code: string; title: string | null }>)
+      : [];
+  } else if (hasCreatedAtColumn) {
+    const rowsResult = await sql`
+      SELECT id, code, created_at
+      FROM public.shared_diagrams
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    rows = Array.isArray(rowsResult)
+      ? (rowsResult as Array<{ id: string; code: string; created_at: string | Date }>)
+      : [];
+  } else {
+    const rowsResult = await sql`
+      SELECT id, code
+      FROM public.shared_diagrams
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    rows = Array.isArray(rowsResult)
+      ? (rowsResult as Array<{ id: string; code: string }>)
+      : [];
+  }
 
   if (rows.length === 0) {
     sendError(res, 404, 'Shared diagram not found.');
@@ -130,7 +193,9 @@ async function handleRead(req: VercelRequest, res: VercelResponse) {
   }
 
   const row = rows[0];
-  const createdAt = row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at);
+  const createdAt = row.created_at
+    ? (row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at))
+    : new Date().toISOString();
   res.status(200).json({
     id: row.id,
     code: row.code,
