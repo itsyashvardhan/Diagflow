@@ -61,6 +61,26 @@ function generateShareId(): string {
   return `${segment()}-${segment()}-${segment()}`;
 }
 
+async function ensureSharedDiagramsTable() {
+  const sql = getSqlClient();
+  await sql`
+    CREATE TABLE IF NOT EXISTS public.shared_diagrams (
+      id text PRIMARY KEY,
+      code text NOT NULL,
+      title text,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS shared_diagrams_code_idx
+    ON public.shared_diagrams (code)
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS shared_diagrams_created_at_idx
+    ON public.shared_diagrams (created_at DESC)
+  `;
+}
+
 async function handleCreate(req: VercelRequest, res: VercelResponse) {
   const body = parseBody<{ code?: unknown; title?: unknown }>(req);
   if (typeof body.code !== 'string' || !body.code.trim()) {
@@ -73,6 +93,7 @@ async function handleCreate(req: VercelRequest, res: VercelResponse) {
   }
 
   const sql = getSqlClient();
+  await ensureSharedDiagramsTable();
   const title = normalizeTitle(body.title);
 
   const existingResult = await sql`
@@ -114,6 +135,7 @@ async function handleRead(req: VercelRequest, res: VercelResponse) {
   }
 
   const sql = getSqlClient();
+  await ensureSharedDiagramsTable();
   const rowsResult = await sql`
     SELECT id, code, title, created_at
     FROM public.shared_diagrams
