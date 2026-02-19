@@ -3,35 +3,42 @@ import { getSqlClient } from './_db';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const info: any = {
-        hasNeonDatabaseUrl: !!process.env.NEON_DATABASE_URL,
-        hasDatabaseUrl: !!process.env.DATABASE_URL,
         env: process.env.NODE_ENV,
+        nodeVersion: process.version,
         timestamp: new Date().toISOString(),
     };
 
     try {
-        const url = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+        const url = (
+            process.env.NEON_DATABASE_URL ||
+            process.env.POSTGRES_URL ||
+            process.env.DATABASE_URL ||
+            ''
+        ).trim();
+
         if (url) {
-            const parsed = new URL(url);
-            info.dbHost = parsed.host;
-            info.dbPort = parsed.port;
-            info.dbUser = parsed.username;
-            info.dbName = parsed.pathname.substring(1);
+            try {
+                const parsed = new URL(url);
+                info.dbHost = parsed.host;
+                info.dbName = parsed.pathname.substring(1);
+            } catch (urlErr) {
+                info.urlError = 'Failed to parse URL';
+            }
         }
 
         const sql = getSqlClient();
         const result = await sql`SELECT 1 as connected`;
-
         info.queryResult = result;
         info.status = 'connected';
 
         // Test table access
         try {
             const tables = await sql`
-        SELECT table_name 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public'
-      `;
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+                AND table_name IN ('shared_diagrams', 'waitlist')
+            `;
             info.tables = tables;
         } catch (tableErr: any) {
             info.tableError = tableErr.message || String(tableErr);
@@ -41,7 +48,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         info.status = 'error';
         info.errorMessage = error.message || String(error);
-        info.errorStack = error.stack;
         if (error.code) info.errorCode = error.code;
 
         console.error('[api/debug-db] Check failed', error);
