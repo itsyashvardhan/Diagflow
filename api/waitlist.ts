@@ -20,21 +20,6 @@ function parseBody<T>(req: VercelRequest): T {
   return req.body as T;
 }
 
-async function ensureWaitlistTable() {
-  const sql = getSqlClient();
-  await sql`
-    CREATE TABLE IF NOT EXISTS public.waitlist (
-      id bigserial PRIMARY KEY,
-      email text NOT NULL UNIQUE,
-      created_at timestamptz NOT NULL DEFAULT now()
-    )
-  `;
-  await sql`
-    CREATE INDEX IF NOT EXISTS waitlist_created_at_idx
-    ON public.waitlist (created_at DESC)
-  `;
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method !== 'POST') {
@@ -55,8 +40,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    await ensureWaitlistTable();
-
     const sql = getSqlClient();
     const insertedResult = await sql`
       INSERT INTO public.waitlist (email)
@@ -69,6 +52,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).json({ ok: true, inserted: inserted.length > 0 });
   } catch (error) {
     console.error('[api/waitlist] Request failed', error);
+    if (error && typeof error === 'object' && 'code' in error && error.code === '42P01') {
+      sendError(res, 503, 'Database table is not initialized. Please run db/schema.sql.');
+      return;
+    }
     sendError(res, 500, 'Server error while handling waitlist.');
   }
 }
