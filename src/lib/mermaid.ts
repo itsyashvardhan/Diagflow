@@ -64,6 +64,9 @@ export const getMermaidConfig = (theme: MermaidTheme): MermaidConfig => {
 // Store mermaid instance to avoid re-initialization issues
 let mermaidInstance: typeof import("mermaid").default | null = null;
 let lastTheme: MermaidTheme | null = null;
+const RENDER_TIMEOUT_MS = 30000;
+const LARGE_DIAGRAM_COMPLEXITY_THRESHOLD = 450;
+const MAX_SAFE_SVG_DIMENSION = 32000;
 
 export const initializeMermaid = async (theme: MermaidTheme = "default") => {
   try {
@@ -134,6 +137,72 @@ const cleanErrorMessage = (error: string): string => {
   return cleaned || "Invalid diagram syntax. Please check your Mermaid code.";
 };
 
+function estimateDiagramComplexity(code: string): number {
+  const lines = code.split("\n").length;
+  const edges = (code.match(/-->|==>|-.->|->>|-->>|\.\.>/g) || []).length;
+  const subgraphs = (code.match(/\bsubgraph\b/gi) || []).length;
+  return lines + (edges * 2) + (subgraphs * 8);
+}
+
+function simplifyDiagramForLargeRender(code: string): { code: string; fixes: string[] } {
+  const fixes: string[] = [];
+  let result = code;
+
+  const removableDirectives = [
+    /^\s*style\s+.+$/gim,
+    /^\s*classDef\s+.+$/gim,
+    /^\s*class\s+.+$/gim,
+    /^\s*linkStyle\s+.+$/gim,
+    /^\s*%%\{init:.*\}%%\s*$/gim,
+  ];
+
+  for (const pattern of removableDirectives) {
+    if (pattern.test(result)) {
+      result = result.replace(pattern, "");
+    }
+  }
+
+  if (result !== code) {
+    fixes.push("Removed heavy style directives for large-diagram stability");
+  }
+
+  const longLabelPattern = /(["'])((?:(?!\1).){120,})\1/g;
+  if (longLabelPattern.test(result)) {
+    result = result.replace(longLabelPattern, (_match, quote: string, label: string) => {
+      return `${quote}${label.slice(0, 117)}...${quote}`;
+    });
+    fixes.push("Trimmed oversized labels to reduce SVG load");
+  }
+
+  result = result.replace(/\n{3,}/g, "\n\n").trim();
+  return { code: result, fixes };
+}
+
+function verifyRenderedSvg(svg: string, element: HTMLElement): void {
+  if (!svg || !svg.includes("<svg")) {
+    throw new Error("Renderer returned invalid SVG output");
+  }
+
+  element.innerHTML = svg;
+
+  const svgElement = element.querySelector("svg");
+  if (!svgElement) {
+    throw new Error("Rendered SVG is missing root element");
+  }
+
+  const width = Number.parseFloat(svgElement.getAttribute("width") || "0");
+  const height = Number.parseFloat(svgElement.getAttribute("height") || "0");
+
+  if (
+    (Number.isFinite(width) && width > MAX_SAFE_SVG_DIMENSION) ||
+    (Number.isFinite(height) && height > MAX_SAFE_SVG_DIMENSION)
+  ) {
+    throw new Error("Diagram is too large for safe canvas rendering. Try a simplified view.");
+  }
+
+  void element.offsetHeight;
+}
+
 export const renderDiagram = async (
   code: string,
   elementId: string,
@@ -154,7 +223,7 @@ export const renderDiagram = async (
     const sanitized = sanitizeDiagram(trimmedCode);
 
     const diagramType = sanitized.diagramType;
-    const codeToRender = sanitized.code;
+    const baseCode = sanitized.code;
 
     // Step 2: Re-initialize if theme changed
     const mermaid = lastTheme !== theme
@@ -167,32 +236,47 @@ export const renderDiagram = async (
     }
 
     // Step 3: Validate syntax
-    const validation = await validateMermaidSyntax(codeToRender);
+    const validation = await validateMermaidSyntax(baseCode);
     if (!validation.valid) {
       const typeLabel = getDiagramTypeLabel(diagramType);
       throw new Error(`${typeLabel} syntax error: ${validation.error || "Invalid syntax"}`);
     }
 
-    // Clear previous content safely
-    element.innerHTML = "";
+    const complexity = estimateDiagramComplexity(baseCode);
+    const largeDiagram = complexity >= LARGE_DIAGRAM_COMPLEXITY_THRESHOLD;
 
-    // Generate unique ID for this render
-    const graphId = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    // Step 4: Render with timeout protection
-    const renderPromise = mermaid.render(graphId, codeToRender);
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("Diagram rendering timed out. The diagram may be too complex.")), 30000);
-    });
-
-    const { svg } = await Promise.race([renderPromise, timeoutPromise]);
-
-    // Safely insert the SVG
-    if (svg && element) {
-      element.innerHTML = svg;
-      // Force immediate DOM update and repaint
-      void element.offsetHeight; // Trigger reflow
+    const attempts: { label: string; code: string }[] = [{ label: "primary", code: baseCode }];
+    if (largeDiagram) {
+      const simplified = simplifyDiagramForLargeRender(baseCode);
+      if (simplified.code && simplified.code !== baseCode) {
+        attempts.push({ label: "simplified-large", code: simplified.code });
+      }
     }
+
+    let lastRenderError: Error | null = null;
+    for (const attempt of attempts) {
+      try {
+        element.innerHTML = "";
+        const graphId = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const renderPromise = mermaid.render(graphId, attempt.code);
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("Diagram rendering timed out. The diagram may be too complex.")), RENDER_TIMEOUT_MS);
+        });
+        const { svg } = await Promise.race([renderPromise, timeoutPromise]);
+        verifyRenderedSvg(svg, element);
+        return;
+      } catch (attemptError) {
+        lastRenderError = attemptError instanceof Error ? attemptError : new Error("Render attempt failed");
+        logger.warn("Mermaid render attempt failed", {
+          attempt: attempt.label,
+          complexity,
+          diagramType,
+          error: lastRenderError.message,
+        });
+      }
+    }
+
+    throw lastRenderError || new Error("Failed to render diagram after recovery attempts");
   } catch (error) {
     logger.error("Mermaid rendering error", error);
 
@@ -219,4 +303,3 @@ export const clearDiagram = (elementId: string): void => {
     logger.error("Failed to clear diagram", error);
   }
 };
-

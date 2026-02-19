@@ -80,4 +80,18 @@ describe("sanitizeDiagram", () => {
     const result = sanitizeDiagram("flowchart TD\n  A --> B");
     expect(Array.isArray(result.warnings)).toBe(true);
   });
+
+  it("normalizes unsafe flowchart labels and link syntax", () => {
+    const code = 'flowchart TD\n  A[Dedicated NPU Memory (e.g., HBM)] --- B[Compute]';
+    const result = sanitizeDiagram(code);
+    expect(result.code).toContain('A["Dedicated NPU Memory (e.g., HBM)"] --> B["Compute"]');
+  });
+
+  it("removes markdown noise from flowchart blocks", () => {
+    const code = '```mermaid\n**Explanation:**\nflowchart TD\n  A --> B\n```';
+    const result = sanitizeDiagram(code);
+    expect(result.code).toContain("flowchart TD");
+    expect(result.code).not.toContain("```");
+    expect(result.code).not.toContain("**Explanation:**");
+  });
 });

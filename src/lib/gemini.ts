@@ -1,6 +1,7 @@
 
 import { logger } from "./logger";
 import { Message, DiagramResponse, AppSettings, RetryCallback } from "@/types/diagflo";
+import { sanitizeDiagram, detectDiagramType } from "./diagramSanitizer";
 
 // Default system prompt for Gemini
 const SYSTEM_PROMPT = `You are Diagflo, an expert system diagram assistant. Generate clear, accurate diagrams in Mermaid or Chart.js DSL as requested. Always explain your reasoning and suggest enhancements if possible.`;
@@ -320,6 +321,36 @@ export function parseDiagramResponse(text: string): DiagramResponse {
     if (chartjsMatch) {
       // Wrap the JSON in chartjs tags for the renderer to detect
       sections.code = `chartjs\n${chartjsMatch[1].trim()}`;
+    }
+  }
+
+  // Self-healing extraction for plain-text Mermaid (no code fence).
+  if (!sections.code) {
+    const lineStartKeywords = [
+      "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2",
+      "erDiagram", "gantt", "pie", "gitGraph", "mindmap", "timeline", "quadrantChart",
+      "requirementDiagram", "C4Context", "C4Container", "C4Component", "C4Dynamic", "C4Deployment",
+      "journey", "xychart-beta", "sankey-beta", "block-beta", "packet-beta", "architecture-beta", "kanban",
+    ];
+
+    const escaped = lineStartKeywords.map((k) => k.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&"));
+    const startRegex = new RegExp(`(^|\\n)\\s*(${escaped.join("|")})\\b`, "i");
+    const start = text.search(startRegex);
+
+    if (start >= 0) {
+      const candidate = text.slice(start).trim()
+        .replace(/^```[\w-]*\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+      sections.code = candidate;
+    }
+  }
+
+  // Normalize Mermaid output for all supported diagram formats.
+  if (sections.code) {
+    const detected = detectDiagramType(sections.code);
+    if (detected && detected !== "chartjs") {
+      sections.code = sanitizeDiagram(sections.code).code;
     }
   }
 

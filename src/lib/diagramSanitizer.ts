@@ -121,6 +121,13 @@ function sanitizeFlowchart(code: string): { code: string; fixes: string[] } {
     const fixes: string[] = [];
     let result = code;
 
+    // Fix 0: Remove accidental markdown fences and section headers from code output
+    const markdownNoiseRegex = /^```[\w-]*\s*$|^```\s*$|^\s*\*\*Explanation:\*\*\s*$|^\s*\*\*Structured Diagram Code:\*\*\s*$/gim;
+    if (markdownNoiseRegex.test(result)) {
+        result = result.replace(markdownNoiseRegex, '').trim();
+        fixes.push('Removed markdown noise from flowchart code');
+    }
+
     // Fix 1: Replace \n with <br/> in node labels
     const escapedNewlineRegex = /\["([^"]*?)\\n([^"]*?)"\]/g;
     let match;
@@ -137,7 +144,44 @@ function sanitizeFlowchart(code: string): { code: string; fixes: string[] } {
         fixes.push('Fixed stroke-dasharray spacing');
     }
 
-    // Fix 3: Remove problematic Unicode arrows in labels
+    // Fix 3: Normalize excessive hyphen links to stable arrow syntax
+    const excessiveDashArrow = /-{3,}>/g;
+    if (excessiveDashArrow.test(result)) {
+        result = result.replace(excessiveDashArrow, '-->');
+        fixes.push('Normalized unsupported long-dash arrow syntax');
+    }
+
+    const excessiveDashLink = /(\S)\s-{3,}\s(\S)/g;
+    if (excessiveDashLink.test(result)) {
+        result = result.replace(excessiveDashLink, '$1 --> $2');
+        fixes.push('Converted ambiguous dashed links to standard arrows');
+    }
+
+    // Fix 4: Quote unsafe bracket labels to avoid parser ambiguity
+    const unquotedBracketLabelRegex = /([A-Za-z_][A-Za-z0-9_]*)\[([^\]\n"]+)\]/g;
+    if (unquotedBracketLabelRegex.test(result)) {
+        result = result.replace(unquotedBracketLabelRegex, (_m, id: string, label: string) => {
+            const normalizedLabel = label
+                .replace(/\[/g, '(')
+                .replace(/\]/g, ')')
+                .replace(/"/g, '\\"')
+                .trim();
+            return `${id}["${normalizedLabel}"]`;
+        });
+        fixes.push('Quoted unquoted flowchart labels for parser safety');
+    }
+
+    // Fix 5: Normalize smart quotes and long dashes
+    const smartTypography = /[“”‘’—–]/g;
+    if (smartTypography.test(result)) {
+        result = result
+            .replace(/[“”]/g, '"')
+            .replace(/[‘’]/g, "'")
+            .replace(/[—–]/g, '-');
+        fixes.push('Normalized smart typography characters');
+    }
+
+    // Fix 6: Remove problematic Unicode arrows in labels
     const unicodeArrows = /["']([^"']*)[→↑↓←←→]([^"']*)['"]/g;
     if (unicodeArrows.test(result)) {
         result = result.replace(/→/g, '->').replace(/←/g, '<-').replace(/↑/g, '^').replace(/↓/g, 'v');
