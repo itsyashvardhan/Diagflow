@@ -1,9 +1,8 @@
-import { supabase } from './supabase';
 import { logger } from './logger';
 
 /**
  * Share Link Storage - Manages short shareable links for diagrams
- * Using Supabase for true cross-device sharing.
+ * Using Neon-backed server endpoints for true cross-device sharing.
  * Includes automatic retry logic for transient network/521 errors.
  */
 
@@ -14,8 +13,31 @@ interface SharedDiagram {
     createdAt: string;
 }
 
+interface CreateShareLinkResponse {
+    id: string;
+}
+
+interface SharedDiagramResponse {
+    id: string;
+    code: string;
+    title?: string | null;
+    createdAt: string;
+}
+
+class RetryableError extends Error {}
+
+const SHARE_LINKS_ENDPOINT = '/api/share-links';
+
+async function parseJson<T>(response: Response): Promise<T | null> {
+    try {
+        return (await response.json()) as T;
+    } catch {
+        return null;
+    }
+}
+
 /**
- * Retry wrapper for Supabase operations.
+ * Retry wrapper for share-link API operations.
  * Handles transient 521 (origin down) and network errors with exponential backoff.
  */
 async function withRetry<T>(
@@ -31,6 +53,7 @@ async function withRetry<T>(
         } catch (err: unknown) {
             lastError = err;
             const isRetryable =
+                err instanceof RetryableError ||
                 err instanceof TypeError || // Network error / CORS failure
                 (err instanceof Error && /fetch|network|521|CORS/i.test(err.message));
 
@@ -64,113 +87,82 @@ export function generateShareId(): string {
 }
 
 /**
- * Create a shareable link for a diagram in Supabase
+ * Create a shareable link for a diagram in Neon (via API)
  * Returns the short ID and full URL
  */
 export async function createShareLink(code: string, title?: string): Promise<{ id: string; url: string }> {
-    // Check if configuration is valid
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) {
-        logger.error("Supabase configuration missing", {
-            hasUrl: Boolean(import.meta.env.VITE_SUPABASE_URL),
-            hasKey: Boolean(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
-        });
-        throw new Error("Supabase credentials not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to your .env file.");
+    if (!code.trim()) {
+        throw new Error("Cannot create a share link for an empty diagram.");
     }
 
     return withRetry(async () => {
         logger.info("Creating share link...", { codeLength: code.length, title });
 
-        // First, check if this exact diagram already has a shared link
-        const { data: existing, error: searchError } = await supabase!
-            .from('shared_diagrams')
-            .select('id')
-            .eq('code', code)
-            .limit(1)
-            .maybeSingle();
+        const response = await fetch(SHARE_LINKS_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code, title }),
+        });
+        const payload = await parseJson<CreateShareLinkResponse & { error?: string }>(response);
 
-        if (searchError) {
-            logger.error("Error searching for existing share link", searchError);
-            // If it's a network-level failure, throw to trigger retry
-            if (searchError.message?.includes('fetch') || searchError.code === 'PGRST') {
-                throw new Error(`Network error searching shared diagrams: ${searchError.message}`);
-            }
+        if (response.status >= 500 || response.status === 429) {
+            throw new RetryableError(payload?.error || `Server error (${response.status}) while creating share link`);
         }
 
-        if (existing) {
-            logger.info("Found existing share link", existing.id);
-            return {
-                id: existing.id,
-                url: `${window.location.origin}/d/${existing.id}`,
-            };
+        if (!response.ok) {
+            throw new Error(payload?.error || `Failed to create share link (${response.status})`);
         }
 
-        // Generate new ID
-        const id = generateShareId();
-        logger.info("Generated new share ID", id);
-
-        // Try to insert
-        const { error: insertError } = await supabase!
-            .from('shared_diagrams')
-            .insert([
-                { id, code, title }
-            ]);
-
-        if (insertError) {
-            logger.error("Supabase insert error", {
-                error: insertError,
-                message: insertError.message,
-                details: insertError.details,
-                hint: insertError.hint,
-                code: insertError.code
-            });
-            throw new Error(`Failed to create share link: ${insertError.message || "Unknown error"}`);
+        if (!payload?.id) {
+            throw new Error("Share link creation succeeded but response is missing ID.");
         }
 
-        logger.info("Share link created successfully", id);
+        logger.info("Share link created successfully", payload.id);
         return {
-            id,
-            url: `${window.location.origin}/d/${id}`,
+            id: payload.id,
+            url: `${window.location.origin}/d/${payload.id}`,
         };
     }, "createShareLink");
 }
 
 /**
- * Retrieve a shared diagram by ID from Supabase
+ * Retrieve a shared diagram by ID from Neon (via API)
  */
 export async function getSharedDiagram(id: string): Promise<SharedDiagram | null> {
-    if (!supabase) {
-        logger.error("Supabase client not initialized");
+    if (!id.trim()) {
         return null;
     }
 
     return withRetry(async () => {
         logger.info("Fetching shared diagram", id);
 
-        const { data, error } = await supabase!
-            .from('shared_diagrams')
-            .select('*')
-            .eq('id', id)
-            .single();
+        const response = await fetch(`${SHARE_LINKS_ENDPOINT}?id=${encodeURIComponent(id)}`, {
+            method: 'GET',
+        });
+        const payload = await parseJson<SharedDiagramResponse & { error?: string }>(response);
 
-        if (error || !data) {
-            logger.error("Could not find shared diagram", {
-                id,
-                error,
-                errorMessage: error?.message,
-                errorDetails: error?.details,
-                errorHint: error?.hint,
-                errorCode: error?.code,
-                hasData: Boolean(data)
-            });
+        if (response.status === 404) {
+            logger.warn("Shared diagram not found", { id });
             return null;
         }
 
-        logger.info("Shared diagram found", { id: data.id, title: data.title });
+        if (response.status >= 500 || response.status === 429) {
+            throw new RetryableError(payload?.error || `Server error (${response.status}) while loading shared diagram`);
+        }
+
+        if (!response.ok || !payload) {
+            logger.error("Failed to fetch shared diagram", { id, status: response.status, error: payload?.error });
+            return null;
+        }
+
+        logger.info("Shared diagram found", { id: payload.id, title: payload.title });
         return {
-            id: data.id,
-            code: data.code,
-            title: data.title,
-            createdAt: data.created_at
+            id: payload.id,
+            code: payload.code,
+            title: payload.title || undefined,
+            createdAt: payload.createdAt
         };
     }, "getSharedDiagram");
 }

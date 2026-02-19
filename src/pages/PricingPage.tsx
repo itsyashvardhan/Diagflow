@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 import { Sparkles, Zap, Building2, Crown, Lock } from "lucide-react";
 import { useCanonical } from "@/hooks/use-canonical";
-import { supabase } from "@/lib/supabase";
 
 const PricingPage = () => {
     const [isDark, setIsDark] = useState(true);
@@ -29,18 +28,22 @@ const PricingPage = () => {
         setLoading(true);
 
         try {
-            // We use the existing 'waitlist' table
-            const { error } = await supabase
-                .from('waitlist')
-                .insert([{ email }]);
+            const response = await fetch('/api/waitlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
 
-            if (error) throw error;
+            if (!response.ok && response.status !== 409) {
+                throw new Error(`Waitlist request failed (${response.status})`);
+            }
 
             setJoinedWaitlist(true);
             setEmail("");
-        } catch {
-            // Supabase may throw on duplicate emails — treat as idempotent success
-            setJoinedWaitlist(true);
+        } catch (error) {
+            console.error("Failed to join waitlist", error);
         } finally {
             setLoading(false);
         }
