@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `;
 
     res.status(200).json({ ok: true, inserted: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[api/waitlist] Request failed', error);
     if (error instanceof Error && /Missing database connection string/i.test(error.message)) {
       sendError(res, 503, 'Database connection is not configured. Set NEON_DATABASE_URL.');
@@ -74,6 +74,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       sendError(res, 503, 'Database credentials are invalid for the configured connection string.');
       return;
     }
-    sendError(res, 500, 'Server error while handling waitlist.');
+
+    const message = error instanceof Error ? error.message : String(error);
+    sendError(res, 500, `Server error while handling waitlist: ${message}`);
   }
 }

@@ -18,7 +18,7 @@
 # - Dark and Light Theme
 #
 # Tech Stack: React, TypeScript, Vite, Tailwind CSS, Mermaid.js, Chart.js,
-#             Google Gemini API, Vercel, Supabase
+#             Google Gemini API, Vercel, NeonDB
 #
 # Pages:
 #   /         Landing page

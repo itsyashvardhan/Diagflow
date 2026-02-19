@@ -29,7 +29,7 @@ Diagflo is available at: https://diagflo.yashvardhan.dev
 - **Diagram Rendering**: Mermaid.js, Chart.js
 - **AI**: Google Gemini API (user provides their own key)
 - **Hosting**: Vercel
-- **Sharing**: Supabase (for shareable diagram links)
+- **Sharing**: NeonDB (for shareable diagram links)
 
 ## Pages
 

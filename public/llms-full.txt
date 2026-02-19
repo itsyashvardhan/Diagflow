@@ -86,7 +86,7 @@ User Browser
 │   ├── Chart.js Renderer (advanced charts with annotations)
 │   └── Export Engine (SVG/PNG generation)
 ├── localStorage (API key, conversation history, preferences)
-└── Supabase (shareable diagram link storage only)
+└── NeonDB (shareable diagram link storage only)
 ```
 
 ### Tech Stack
@@ -99,7 +99,7 @@ User Browser
 | Charts | Chart.js + chartjs-plugin-annotation |
 | AI | Google Gemini API |
 | Hosting | Vercel |
-| Share Storage | Supabase |
+| Share Storage | NeonDB |
 | Analytics | Vercel Analytics |
 
 ---
@@ -109,7 +109,7 @@ User Browser
 - **No server-side data processing**: All AI requests go directly from the user's browser to Google's Gemini API.
 - **API key storage**: Stored in browser localStorage only. Never sent to Diagflo servers.
 - **No telemetry on diagram content**: Diagflo does not log, store, or analyze user prompts or generated diagrams.
-- **Shareable links**: Only the Mermaid/Chart.js code is stored in Supabase when the user explicitly creates a share link. No prompts or conversation history are shared.
+- **Shareable links**: Only the Mermaid/Chart.js code is stored in NeonDB when the user explicitly creates a share link. No prompts or conversation history are shared.
 - **CSP enforced**: Content Security Policy headers restrict script/style/connect sources.
 
 ---

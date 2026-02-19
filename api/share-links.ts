@@ -144,7 +144,7 @@ async function handleRead(req: VercelRequest, res: VercelResponse) {
   const hasTitleColumn = await tableHasColumn('shared_diagrams', 'title');
   const hasCreatedAtColumn = await tableHasColumn('shared_diagrams', 'created_at');
 
-  let rows: Array<{ id: string; code: string; title: string | null; created_at?: string | Date }> = [];
+  let rows: Array<{ id: string; code: string; title?: string | null; created_at?: string | Date }> = [];
   if (hasTitleColumn && hasCreatedAtColumn) {
     const rowsResult = await sql`
       SELECT id, code, title, created_at
@@ -153,7 +153,7 @@ async function handleRead(req: VercelRequest, res: VercelResponse) {
       LIMIT 1
     `;
     rows = Array.isArray(rowsResult)
-      ? (rowsResult as Array<{ id: string; code: string; title: string | null; created_at: string | Date }>)
+      ? (rowsResult as Array<{ id: string; code: string; title?: string | null; created_at: string | Date }>)
       : [];
   } else if (hasTitleColumn) {
     const rowsResult = await sql`
@@ -163,7 +163,7 @@ async function handleRead(req: VercelRequest, res: VercelResponse) {
       LIMIT 1
     `;
     rows = Array.isArray(rowsResult)
-      ? (rowsResult as Array<{ id: string; code: string; title: string | null }>)
+      ? (rowsResult as Array<{ id: string; code: string; title?: string | null }>)
       : [];
   } else if (hasCreatedAtColumn) {
     const rowsResult = await sql`
@@ -221,7 +221,7 @@ export default async function handler(
 
     res.setHeader('Allow', 'GET, POST');
     sendError(res, 405, 'Method not allowed.');
-  } catch (error) {
+  } catch (error: any) {
     console.error('[api/share-links] Request failed', error);
     if (error instanceof Error && /Missing database connection string/i.test(error.message)) {
       sendError(res, 503, 'Database connection is not configured. Set NEON_DATABASE_URL.');
@@ -235,6 +235,8 @@ export default async function handler(
       sendError(res, 503, 'Database credentials are invalid for the configured connection string.');
       return;
     }
-    sendError(res, 500, 'Server error while handling share links.');
+
+    const message = error instanceof Error ? error.message : String(error);
+    sendError(res, 500, `Server error while handling share links: ${message}`);
   }
 }
