@@ -158,8 +158,16 @@ export default async function handler(
     sendError(res, 405, 'Method not allowed.');
   } catch (error) {
     console.error('[api/share-links] Request failed', error);
+    if (error instanceof Error && /Missing database connection string/i.test(error.message)) {
+      sendError(res, 503, 'Database connection is not configured. Set NEON_DATABASE_URL.');
+      return;
+    }
     if (error && typeof error === 'object' && 'code' in error && error.code === '42P01') {
       sendError(res, 503, 'Database table is not initialized. Please run db/schema.sql.');
+      return;
+    }
+    if (error && typeof error === 'object' && 'code' in error && (error.code === '28P01' || error.code === '3D000')) {
+      sendError(res, 503, 'Database credentials are invalid for the configured connection string.');
       return;
     }
     sendError(res, 500, 'Server error while handling share links.');
