@@ -59,8 +59,8 @@ const PrivacyPage = () => {
 
         <Section title="Data We Collect">
           <p><strong>API Keys.</strong> Your Gemini API key is stored exclusively in your browser's localStorage. It is never transmitted to Diagflo's servers — requests go directly from your browser to Google's Gemini API.</p>
-          <p><strong>Shared Diagrams.</strong> When you choose to share a diagram, the diagram code and title are stored in our Supabase database. No personal data, API keys, or chat history is included in shared diagrams.</p>
-          <p><strong>Waitlist Emails.</strong> If you join our premium waitlist, your email address is stored in Supabase. We use it solely to notify you about premium feature availability.</p>
+          <p><strong>Shared Diagrams.</strong> When you choose to share a diagram, the diagram code and title are stored in our Postgres db. No personal data, API keys, or chat history is included in shared diagrams.</p>
+          <p><strong>Waitlist Emails.</strong> If you join our premium waitlist, your email address is stored in our Postgres instance. We use it solely to notify you about premium feature availability.</p>
           <p><strong>Analytics.</strong> We use Vercel Analytics, which collects anonymous, aggregated page-view data. No cookies are set, and no personal information is tracked.</p>
         </Section>
 
@@ -79,7 +79,7 @@ const PrivacyPage = () => {
           <p>Diagflo integrates with the following third-party services:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>Google Gemini API</strong> — Diagram generation. Governed by <a href="https://ai.google.dev/terms" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">Google's Terms of Service</a>.</li>
-            <li><strong>Supabase</strong> — Shared diagram storage and waitlist.</li>
+            <li><strong>Neon</strong> — Postgres database for shared diagram storage and waitlist.</li>
             <li><strong>Vercel</strong> — Hosting and anonymous analytics.</li>
           </ul>
         </Section>

@@ -225,7 +225,7 @@ const Index = () => {
     document.documentElement.classList.add('dark');
   }, []);
 
-  // Handle shared diagram loading from Supabase
+  // Handle shared diagram loading from the database
   useEffect(() => {
     const loadSharedData = async () => {
       if (shareId) {

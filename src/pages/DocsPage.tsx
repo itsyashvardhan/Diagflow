@@ -541,7 +541,7 @@ Archie: [adds error handling branches]`}
 
             <h3 className={`text-lg font-semibold mb-3 ${isDark ? "text-white" : "text-black"}`}>Sharing Diagrams</h3>
             <p className={`text-base leading-relaxed ${isDark ? "text-white/60" : "text-black/60"}`}>
-              Click <strong>Share</strong> to generate a unique link. Anyone with the link can view your diagram — no account required. Shared diagrams are stored securely in Supabase.
+              Click <strong>Share</strong> to generate a unique link. Anyone with the link can view your diagram — no account required. Shared diagrams are stored securely in Neon Postgres.
             </p>
           </section>
 
@@ -624,7 +624,7 @@ Archie: [adds error handling branches]`}
                 },
                 {
                   title: "Shared Diagrams",
-                  desc: "When you share a diagram, only the diagram code and title are stored in Supabase. No personal data, API keys, or chat history is included.",
+                  desc: "When you share a diagram, only the diagram code and title are stored in Neon Postgres. No personal data, API keys, or chat history is included.",
                 },
                 {
                   title: "Security Headers",

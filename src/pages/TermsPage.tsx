@@ -84,7 +84,7 @@ const TermsPage = () => {
 
         <Section title="Shared Content">
           <p>
-            When you share a diagram, the diagram code and title are stored on our servers (Supabase) and
+            When you share a diagram, the diagram code and title are stored on our servers (Neon Postgres) and
             accessible via a public link. You retain ownership of your content. By sharing, you grant Diagflo
             a non-exclusive license to host and display the shared diagram.
           </p>
