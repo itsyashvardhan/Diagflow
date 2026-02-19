@@ -703,8 +703,7 @@ const Index = () => {
                   <DiagfloLogo className="relative w-8 h-8 sm:w-9 sm:h-9" />
                 </div>
                 <div className="leading-tight">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/70">Diagflo Workspace</p>
-                  <h1 className="text-sm sm:text-base font-semibold tracking-tight text-foreground/95">Visual Intelligence Studio</h1>
+                  <h1 className="text-sm sm:text-base font-semibold tracking-tight text-foreground/95">Diagflo Workspace</h1>
                 </div>
               </div>
 
@@ -782,25 +781,6 @@ const Index = () => {
                   )}
                 </Button>
               </div>
-            </div>
-          </div>
-
-          <div className="border-t border-white/5">
-            <div className="mx-auto w-full max-w-[1800px] px-3 sm:px-5 py-2 flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
-                Gemini API
-              </span>
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                Messages: {messages.length}
-              </span>
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                Versions: {diagramHistory.length}
-              </span>
-              {isGenerating && (
-                <span className="inline-flex items-center rounded-full border border-accent/25 bg-accent/10 px-2.5 py-1 text-[11px] font-medium text-accent">
-                  Generating...
-                </span>
-              )}
             </div>
           </div>
         </header>

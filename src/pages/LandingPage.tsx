@@ -238,7 +238,7 @@ const LandingPage = () => {
                   </Link>
                 </div>
 
-                <div className="mt-6 sm:mt-7 grid gap-2 sm:grid-cols-2">
+                {/* <div className="mt-6 sm:mt-7 grid gap-2 sm:grid-cols-2">
                   <div
                     className={`inline-flex items-center gap-2 text-sm ${
                       isDark ? "text-white/70" : "text-black/65"
@@ -247,7 +247,7 @@ const LandingPage = () => {
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                     Bring your own API key
                   </div>
-                </div>
+                </div> */}
 
                 {/* <div className="mt-4 sm:mt-5 flex flex-wrap gap-2">
                   {["Engineering", "Product", "Operations", "Analytics", "Education"].map((track) => (
