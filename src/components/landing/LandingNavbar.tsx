@@ -1,115 +1,185 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Menu, Moon, Sparkles, Sun, X } from "lucide-react";
 import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
 
 const LandingNavbar = () => {
-    const [isDark, setIsDark] = useState(
-        document.documentElement.classList.contains("dark")
-    );
+  const [isDark, setIsDark] = useState(
+    document.documentElement.classList.contains("dark")
+  );
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    useEffect(() => {
-        const handler = () =>
-            setIsDark(document.documentElement.classList.contains("dark"));
-        window.addEventListener("theme-changed", handler);
-        return () => window.removeEventListener("theme-changed", handler);
-    }, []);
+  useEffect(() => {
+    const handler = () =>
+      setIsDark(document.documentElement.classList.contains("dark"));
+    window.addEventListener("theme-changed", handler);
+    return () => window.removeEventListener("theme-changed", handler);
+  }, []);
 
-    const toggleTheme = () => {
-        document.documentElement.classList.toggle("dark");
-        const nowDark = document.documentElement.classList.contains("dark");
-        setIsDark(nowDark);
-        window.dispatchEvent(new Event("theme-changed"));
+  useEffect(() => {
+    const closeOnDesktop = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false);
+      }
     };
 
-    return (
-        <>
-            {/* Skip to content - WCAG 2.1 AA */}
-            <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-orange-500 focus:text-white focus:text-sm focus:font-medium"
-            >
-                Skip to content
+    window.addEventListener("resize", closeOnDesktop);
+    return () => window.removeEventListener("resize", closeOnDesktop);
+  }, []);
+
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle("dark");
+    const nowDark = document.documentElement.classList.contains("dark");
+    setIsDark(nowDark);
+    window.dispatchEvent(new Event("theme-changed"));
+  };
+
+  const navLinkTone = `transition-colors ${
+    isDark
+      ? "text-white/75 hover:bg-white/10 hover:text-white"
+      : "text-black/70 hover:bg-black/5 hover:text-black"
+  }`;
+
+  return (
+    <>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-orange-500 focus:text-white focus:text-sm focus:font-medium"
+      >
+        Skip to content
+      </a>
+
+      <nav
+        className={`sticky top-0 z-50 backdrop-blur-xl border-b transition-colors duration-300 ${
+          isDark
+            ? "bg-[#090a0f]/85 border-white/10 text-white"
+            : "bg-[#f4f6f8]/85 border-black/10 text-[#111827]"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <DiagfloLogo className="w-8 h-8 shrink-0" />
+            <div className="leading-tight min-w-0">
+              <span className="text-sm font-bold tracking-tight block truncate">Diagflo</span>
+            </div>
+          </div>
+
+          <div
+            className={`hidden md:flex items-center gap-1.5 rounded-full border px-2 py-1 ${
+              isDark ? "border-white/15 bg-white/[0.03]" : "border-black/10 bg-white/70"
+            }`}
+          >
+            <a href="#features" className={`px-3 py-1.5 rounded-full text-sm ${navLinkTone}`}>
+              Features
             </a>
-
-            {/* Navigation - Eagerly loaded, renders instantly */}
-            <nav
-                className={`font-sans antialiased sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-300 ${isDark
-                        ? "text-[#F5F5F7] bg-black/80 border-gray-800/50"
-                        : "text-[#111111] bg-white/80 border-gray-200/50"
-                    }`}
+            <a href="#how-it-works" className={`px-3 py-1.5 rounded-full text-sm ${navLinkTone}`}>
+              Workflow
+            </a>
+            <a href="#security" className={`px-3 py-1.5 rounded-full text-sm ${navLinkTone}`}>
+              Security
+            </a>
+            <a href="#use-cases" className={`px-3 py-1.5 rounded-full text-sm ${navLinkTone}`}>
+              Use Cases
+            </a>
+            <Link to="/docs" className={`px-3 py-1.5 rounded-full text-sm ${navLinkTone}`}>
+              Docs
+            </Link>
+            <Link
+              to="/pricing"
+              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                isDark ? "text-orange-300 hover:bg-orange-400/10" : "text-orange-700 hover:bg-orange-100"
+              }`}
             >
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                        <DiagfloLogo className="w-9 h-9" />
-                        <span className="font-sans text-lg font-semibold tracking-tight">
-                            Diagflo
-                        </span>
-                    </div>
+              Pricing
+            </Link>
+          </div>
 
-                    <div
-                        className={`hidden md:flex items-center gap-8 text-sm font-medium ${isDark ? "text-[#86868B]" : "text-[#6E6E73]"
-                            }`}
-                    >
-                        <a
-                            className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-[#111]"
-                                }`}
-                            href="#features"
-                        >
-                            Features
-                        </a>
-                        <a
-                            className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-[#111]"
-                                }`}
-                            href="#how-it-works"
-                        >
-                            How It Works
-                        </a>
-                        <Link
-                            className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-[#111]"
-                                }`}
-                            to="/docs"
-                        >
-                            Docs
-                        </Link>
-                        <Link
-                            className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-[#111]"
-                                }`}
-                            to="/pricing"
-                        >
-                            Premium
-                        </Link>
-                    </div>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              onClick={toggleTheme}
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                isDark
+                  ? "border-white/15 bg-white/[0.03] text-white/80 hover:bg-white/10"
+                  : "border-black/10 bg-white text-black/70 hover:bg-black/5"
+              }`}
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
 
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={toggleTheme}
-                            className={`p-2 rounded-full transition-colors ${isDark
-                                    ? "hover:bg-gray-800 text-[#86868B]"
-                                    : "hover:bg-gray-100 text-[#6E6E73]"
-                                }`}
-                        >
-                            {isDark ? (
-                                <span className="material-symbols-outlined text-[20px]">
-                                    light_mode
-                                </span>
-                            ) : (
-                                <span className="material-symbols-outlined text-[20px]">
-                                    dark_mode
-                                </span>
-                            )}
-                        </button>
-                        <Link
-                            to="/app"
-                            className={`hidden sm:flex items-center gap-1 px-5 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-80 ${isDark ? "bg-white text-black" : "bg-[#111] text-white"
-                                }`}
-                        >
-                            Get Started
-                        </Link>
-                    </div>
-                </div>
-            </nav>
-        </>
-    );
+            <Link
+              to="/app"
+              className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors ${
+                isDark
+                  ? "bg-white text-black hover:bg-white/90"
+                  : "bg-[#111827] text-white hover:bg-[#1f2937]"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+              <span className="sm:hidden">App</span>
+              <span className="hidden sm:inline">Open App</span>
+            </Link>
+
+            <button
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="landing-mobile-nav"
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              className={`md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+                isDark
+                  ? "border-white/15 bg-white/[0.03] text-white/80 hover:bg-white/10"
+                  : "border-black/10 bg-white text-black/70 hover:bg-black/5"
+              }`}
+            >
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="landing-mobile-nav"
+          className={`md:hidden overflow-hidden transition-[max-height,opacity,padding] duration-200 ${
+            mobileMenuOpen ? "max-h-80 opacity-100 pb-3" : "max-h-0 opacity-0 pointer-events-none"
+          }`}
+        >
+          <div className="mx-auto max-w-7xl px-3 sm:px-6">
+            <div
+              className={`rounded-2xl border p-2.5 ${
+                isDark ? "border-white/15 bg-white/[0.03]" : "border-black/10 bg-white/80"
+              }`}
+            >
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <a href="#features" onClick={() => setMobileMenuOpen(false)} className={`rounded-xl px-3 py-2 ${navLinkTone}`}>
+                  Features
+                </a>
+                <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className={`rounded-xl px-3 py-2 ${navLinkTone}`}>
+                  Workflow
+                </a>
+                <a href="#security" onClick={() => setMobileMenuOpen(false)} className={`rounded-xl px-3 py-2 ${navLinkTone}`}>
+                  Security
+                </a>
+                <a href="#use-cases" onClick={() => setMobileMenuOpen(false)} className={`rounded-xl px-3 py-2 ${navLinkTone}`}>
+                  Use Cases
+                </a>
+                <Link to="/docs" onClick={() => setMobileMenuOpen(false)} className={`rounded-xl px-3 py-2 ${navLinkTone}`}>
+                  Docs
+                </Link>
+                <Link
+                  to="/pricing"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`rounded-xl px-3 py-2 transition-colors ${
+                    isDark ? "text-orange-300 hover:bg-orange-400/10" : "text-orange-700 hover:bg-orange-100"
+                  }`}
+                >
+                  Pricing
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </>
+  );
 };
 
 export default LandingNavbar;

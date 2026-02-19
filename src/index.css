@@ -163,6 +163,10 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   .glass-panel {
     @apply bg-card/45 backdrop-blur-2xl border border-white/10;
     box-shadow:

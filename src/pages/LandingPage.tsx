@@ -1,471 +1,726 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
-import { BugIcon, GithubIcon, Linkedin, MicIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  ArrowRight,
+  BarChart3,
+  Briefcase,
+  Boxes,
+  CheckCircle2,
+  Clock3,
+  Code2,
+  Database,
+  Download,
+  GitBranch,
+  GraduationCap,
+  Lock,
+  MessageSquareText,
+  Network,
+  Route,
+  Share2,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 import { useCanonical } from "@/hooks/use-canonical";
-import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
-import { Portal } from "@radix-ui/react-tooltip";
 
-// Modern X (formerly Twitter) logo component
-const XLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-);
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
+      { threshold: 0.12 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
+  return { ref, visible };
+}
+
+const capabilityCards = [
+  {
+    icon: MessageSquareText,
+    title: "Prompt-to-diagram",
+    description: "Describe any process, system, workflow, or plan in plain language and iterate conversationally.",
+  },
+  {
+    icon: Network,
+    title: "20+ diagram formats",
+    description: "Flowcharts, sequence, ER, C4, timelines, mindmaps, Sankey and more.",
+  },
+  {
+    icon: Code2,
+    title: "Editable code first",
+    description: "Inspect and edit Mermaid/Chart DSL directly, then re-render instantly.",
+  },
+  {
+    icon: Sparkles,
+    title: "Self-healing output",
+    description: "Auto-sanitization and validation reduce broken diagram states.",
+  },
+  {
+    icon: Share2,
+    title: "Shareable reviews",
+    description: "Generate links for async feedback without requiring account setup.",
+  },
+  {
+    icon: Download,
+    title: "Export-ready assets",
+    description: "Move from ideation to docs and handoff with minimal friction.",
+  },
+];
+
+const workflowSteps = [
+  {
+    id: "01",
+    title: "Describe the problem",
+    body: "Start with your context: product flow, ops process, architecture, research map, or decision tree.",
+  },
+  {
+    id: "02",
+    title: "Generate and refine",
+    body: "Diagflo drafts the diagram, then you iterate with follow-up prompts or direct code edits.",
+  },
+  {
+    id: "03",
+    title: "Ship and share",
+    body: "Export outputs, restore past versions, and share links for review or documentation.",
+  },
+];
+
+const useCaseTracks = [
+  {
+    icon: GitBranch,
+    title: "Engineering",
+    body: "Architecture maps, sequence flows, API interactions, data models, and incident playbooks.",
+  },
+  {
+    icon: Briefcase,
+    title: "Product & Operations",
+    body: "User journeys, process maps, handoff diagrams, SOP workflows, and planning artifacts.",
+  },
+  {
+    icon: BarChart3,
+    title: "Data & Analytics",
+    body: "Pipeline overviews, metric flows, reporting logic, and explainable analysis diagrams.",
+  },
+  {
+    icon: GraduationCap,
+    title: "Education & Research",
+    body: "Concept maps, lecture visuals, framework comparisons, and study-friendly diagrams.",
+  },
+];
+
+const switchReasons = [
+  {
+    icon: Boxes,
+    title: "Flexible by design",
+    body: "Keep output in open, editable diagram formats that are easy to review and reuse.",
+  },
+  {
+    icon: Route,
+    title: "Built for iteration",
+    body: "Chat, code editing, history restore, and retries are all in one continuous workspace.",
+  },
+  {
+    icon: Lock,
+    title: "Practical trust model",
+    body: "Clear controls for local history, explicit sharing, and provider-bound key handling.",
+  },
+];
+
+const dataHandling = [
+  "Gemini mode uses your personal API key from browser settings.",
+  "Shared links are created only when you explicitly publish.",
+  "Local history stays in your browser storage.",
+];
 
 const LandingPage = () => {
   const [isDark, setIsDark] = useState(
     document.documentElement.classList.contains("dark")
   );
-  const [showHero, setShowHero] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
   useCanonical("/");
 
-  useEffect(() => {
-    document.title = "Diagflo — Intelligent Diagram Generation";
+  const capabilitiesReveal = useReveal();
+  const workflowReveal = useReveal();
+  const trustReveal = useReveal();
+  const ctaReveal = useReveal();
 
-    // Sync theme with eagerly-loaded navbar
+  useEffect(() => {
+    document.title = "Diagflo — AI Diagram Workspace for Teams";
     const onThemeChange = () =>
       setIsDark(document.documentElement.classList.contains("dark"));
     window.addEventListener("theme-changed", onThemeChange);
 
-    // Progressive loading sequence
-    requestAnimationFrame(() => {
-      setTimeout(() => setShowHero(true), 100);
-      setTimeout(() => setShowPreview(true), 300);
-    });
-
-    return () => window.removeEventListener("theme-changed", onThemeChange);
+    const t = requestAnimationFrame(() => setHeroReady(true));
+    return () => {
+      cancelAnimationFrame(t);
+      window.removeEventListener("theme-changed", onThemeChange);
+    };
   }, []);
 
-  // Scroll animation hook
-  const useScrollAnimation = () => {
-    const ref = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-          }
-        },
-        { threshold: 0.1 }
-      );
-
-      if (ref.current) {
-        observer.observe(ref.current);
-      }
-
-      return () => observer.disconnect();
-    }, []);
-
-    return { ref, isVisible };
-  };
-
-  const featuresAnim = useScrollAnimation();
-  const howItWorksAnim = useScrollAnimation();
-  const ctaAnim = useScrollAnimation();
-
   return (
-    <div className={`min-h-screen font-sans antialiased transition-colors duration-300 ${isDark ? 'bg-[#131b1f] text-[#F5F5F7]' : 'bg-[#f6f7f8] text-[#111111]'}`}>
-
-      {/* Main content landmark for accessibility */}
+    <div
+      className={`min-h-screen overflow-x-hidden transition-colors duration-300 ${
+        isDark ? "bg-[#090a0f] text-[#f5f7fb]" : "bg-[#f4f6f8] text-[#111827]"
+      }`}
+    >
       <main id="main-content">
+        <section
+          className={`relative overflow-hidden border-b ${
+            isDark ? "border-white/10" : "border-black/10"
+          }`}
+          aria-labelledby="hero-heading"
+        >
+          <div className="pointer-events-none absolute inset-0">
+            <div
+              className={`absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full blur-3xl ${
+                isDark ? "bg-orange-500/18" : "bg-orange-300/30"
+              }`}
+            />
+            <div
+              className={`absolute bottom-0 right-0 h-72 w-72 rounded-full blur-3xl ${
+                isDark ? "bg-amber-500/10" : "bg-amber-200/35"
+              }`}
+            />
+          </div>
 
-        {/* Hero Section */}
-        <section className="relative min-h-[90vh] lg:min-h-screen flex items-center py-20 lg:py-0 overflow-hidden" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full">
-            <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-
-              {/* Left Content - Staggered load */}
-              <div className={`flex flex-col items-start text-left max-w-2xl transition-all duration-700 ease-out ${showHero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                <h1 id="hero-heading" className={`font-sans text-5xl sm:text-6xl lg:text-[4.5rem] font-semibold tracking-tighter leading-[1.05] mb-8 ${isDark ? 'text-[#F5F5F7]' : 'text-[#111]'}`}>
-                  Your{" "}
-                  {/* Clean gradient text with subtle glow - Jony Ive approach */}
-                  <span
-                    className={`font-medium bg-clip-text text-transparent bg-gradient-to-r ${isDark ? 'from-orange-500 to-amber-500' : 'from-orange-400 to-amber-400'}`}
-                    style={{
-                      textShadow: isDark ? '0 0 40px rgba(249, 115, 22, 0.3)' : 'none',
-                      WebkitBackgroundClip: 'text'
-                    }}
-                  >
-                    Design Copilot
-                  </span>{" "}
-                  for Diagrams.
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pb-14 sm:pb-20 pt-20 sm:pt-24 lg:pt-28">
+            <div className="grid min-w-0 items-center gap-8 sm:gap-12 lg:grid-cols-[1.15fr_0.85fr]">
+              <div
+                className={`min-w-0 transition-all duration-700 ${
+                  heroReady
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-6"
+                }`}
+              >
+                <h1
+                  id="hero-heading"
+                  className="mt-4 sm:mt-5 text-4xl font-semibold tracking-tight leading-[1.03] sm:text-5xl lg:text-7xl"
+                >
+                  Turn complex ideas into clear diagrams.
                 </h1>
-                <p className={`text-lg sm:text-xl font-normal leading-relaxed mb-10 max-w-lg tracking-wide ${isDark ? 'text-[#A1A1A6]' : 'text-[#515154]'}`}>
-                  The fastest way to visualize complex systems. Describe your architecture in any language, and let Archie handle the structure.
+                <p
+                  className={`mt-5 sm:mt-6 max-w-2xl text-base sm:text-lg leading-relaxed ${
+                    isDark ? "text-white/70" : "text-black/65"
+                  }`}
+                >
+                  Describe. Visualise. Done.
                 </p>
-                <div className="flex flex-col gap-4 w-full">
-                  <div className="flex flex-row items-center gap-3">
-                    <Link
-                      to="/docs"
-                      className={`group relative inline-flex sm:hidden items-center justify-center gap-2 px-6 py-4 rounded-full text-base font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] border ${isDark
-                        ? 'border-gray-700 text-gray-300 hover:border-orange-500/60 hover:text-white'
-                        : 'border-gray-300 text-gray-700 hover:border-orange-400/60 hover:text-[#111]'
-                        }`}
-                    >
-                      <span className="material-symbols-outlined text-sm">description</span>
-                      Docs
-                    </Link>
-                    <Link
-                      to="/app"
-                      className={`group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${isDark
-                        ? 'bg-gradient-to-b from-white to-gray-100 text-black shadow-lg shadow-white/10'
-                        : 'bg-gradient-to-b from-[#111] to-[#222] text-white shadow-lg shadow-black/20'
-                        }`}
-                    >
-                      Get Started
-                      <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-0.5">arrow_forward</span>
-                    </Link>
+
+                <div className="mt-8 sm:mt-9 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
+                  <Link
+                    to="/app"
+                    className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full px-5 sm:px-6 py-3 text-sm font-semibold transition-all duration-200 ${
+                      isDark
+                        ? "bg-white text-black hover:bg-white/90"
+                        : "bg-[#111827] text-white hover:bg-[#1f2937]"
+                    }`}
+                  >
+                    Open Workspace
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to="/docs"
+                    className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full border px-5 sm:px-6 py-3 text-sm font-semibold transition-colors ${
+                      isDark
+                        ? "border-white/20 text-white/90 hover:bg-white/10"
+                        : "border-black/15 text-black/80 hover:bg-black/5"
+                    }`}
+                  >
+                    View Docs
+                  </Link>
+                </div>
+
+                <div className="mt-6 sm:mt-7 grid gap-2 sm:grid-cols-2">
+                  <div
+                    className={`inline-flex items-center gap-2 text-sm ${
+                      isDark ? "text-white/70" : "text-black/65"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    Bring your own API key
                   </div>
-                  <p className={`flex items-center text-sm font-medium ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                    <span className="material-symbols-outlined text-green-500 text-base mr-1.5">check_circle</span>
-                    No credit card required
+                </div>
+
+                {/* <div className="mt-4 sm:mt-5 flex flex-wrap gap-2">
+                  {["Engineering", "Product", "Operations", "Analytics", "Education"].map((track) => (
+                    <span
+                      key={track}
+                      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
+                        isDark
+                          ? "border-white/15 bg-white/[0.04] text-white/75"
+                          : "border-black/10 bg-white text-black/70"
+                      }`}
+                    >
+                      {track}
+                    </span>
+                  ))}
+                </div> */}
+              </div>
+
+              <div
+                className={`min-w-0 transition-all duration-700 delay-100 ${
+                  heroReady
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-6"
+                }`}
+              >
+                <div
+                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-xl ${
+                    isDark
+                      ? "border-white/10 bg-black/40"
+                      : "border-black/10 bg-white/80"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-orange-500">
+                      Live Preview
+                    </p>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] ${
+                        isDark
+                          ? "bg-emerald-500/15 text-emerald-300"
+                          : "bg-emerald-100 text-emerald-700"
+                      }`}
+                    >
+                      <Clock3 className="h-3.5 w-3.5" />
+                      ~8s render
+                    </span>
+                  </div>
+
+                  <div
+                    className={`mt-4 rounded-xl border p-3 text-sm ${
+                      isDark
+                        ? "border-white/10 bg-white/[0.03]"
+                        : "border-black/10 bg-black/[0.03]"
+                    }`}
+                  >
+                    <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+                      Prompt
+                    </p>
+                    <p className="break-words">
+                      Map the customer onboarding workflow, including KYC checks, handoffs, and escalation paths.
+                    </p>
+                  </div>
+
+                  <div
+                    className={`mt-3 rounded-xl border p-3 ${
+                      isDark
+                        ? "border-white/10 bg-[#0b1016]"
+                        : "border-black/10 bg-[#f8fafc]"
+                    }`}
+                  >
+                    <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
+                      Output
+                    </p>
+                    <pre className="max-w-full overflow-x-auto whitespace-pre text-xs leading-relaxed">
+                      <code>{`flowchart LR
+  Lead["New Customer"] --> Verify["KYC + Verification"]
+  Verify --> Account["Account Setup"]
+  Account --> Success["Activation Complete"]
+  Verify -. issue .-> Escalate["Manual Review Queue"]`}</code>
+                    </pre>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 min-[420px]:grid-cols-3 gap-2 text-center">
+                    <div
+                      className={`rounded-lg border p-2 ${
+                        isDark
+                          ? "border-white/10 bg-white/[0.02]"
+                          : "border-black/10 bg-white"
+                      }`}
+                    >
+                      <p className="text-[11px] text-muted-foreground">Types</p>
+                      <p className="text-sm font-semibold">20+</p>
+                    </div>
+                    <div
+                      className={`rounded-lg border p-2 ${
+                        isDark
+                          ? "border-white/10 bg-white/[0.02]"
+                          : "border-black/10 bg-white"
+                      }`}
+                    >
+                      <p className="text-[11px] text-muted-foreground">Iterations</p>
+                      <p className="text-sm font-semibold">Unlimited</p>
+                    </div>
+                    <div
+                      className={`rounded-lg border p-2 ${
+                        isDark
+                          ? "border-white/10 bg-white/[0.02]"
+                          : "border-black/10 bg-white"
+                      }`}
+                    >
+                      <p className="text-[11px] text-muted-foreground">Exports</p>
+                      <p className="text-sm font-semibold">Ready</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="features"
+          className={`py-14 sm:py-20 border-b ${
+            isDark ? "border-white/10" : "border-black/10"
+          }`}
+        >
+          <div
+            ref={capabilitiesReveal.ref}
+            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${
+              capabilitiesReveal.visible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-7"
+            }`}
+          >
+            <div className="max-w-3xl">
+              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
+                Built for real team workflows, not just demos.
+              </h2>
+              <p
+                className={`mt-4 text-base sm:text-lg ${
+                  isDark ? "text-white/70" : "text-black/65"
+                }`}
+              >
+                Every part of the product is optimized for fast iteration, clean
+                output, and fewer broken diagram states.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {capabilityCards.map((card) => (
+                <div
+                  key={card.title}
+                  className={`rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${
+                    isDark
+                      ? "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
+                      : "border-black/10 bg-white hover:bg-[#fffaf5]"
+                  }`}
+                >
+                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white">
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-lg font-semibold">{card.title}</h3>
+                  <p
+                    className={`mt-2 text-sm leading-relaxed ${
+                      isDark ? "text-white/65" : "text-black/60"
+                    }`}
+                  >
+                    {card.description}
                   </p>
                 </div>
-              </div>
-
-              {/* Right Preview Card - Staggered load with depth */}
-              <div className={`relative w-full aspect-[1/1] lg:aspect-[5/4] transition-all duration-700 ease-out delay-100 ${showPreview ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
-                <div className={`absolute inset-2 lg:inset-0 rounded-2xl overflow-hidden flex flex-col ${isDark
-                  ? 'bg-[#111] border border-white/[0.08] shadow-2xl shadow-orange-500/[0.05]'
-                  : 'bg-white border border-black/[0.08] shadow-2xl shadow-black/10'
-                  }`}>
-
-                  {/* Window Controls */}
-                  <div className={`h-10 border-b flex items-center px-4 gap-2 ${isDark ? 'border-gray-800 bg-black/40' : 'border-gray-100 bg-gray-50'}`}>
-                    <div className={`w-2.5 h-2.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
-                    <div className={`w-2.5 h-2.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
-                    <div className={`w-2.5 h-2.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
-                  </div>
-
-                  <div className="flex-1 flex overflow-hidden">
-                    {/* Left Panel - Prompt */}
-                    <div className={`w-[40%] border-r p-6 flex flex-col gap-4 relative z-10 ${isDark ? 'border-gray-800 bg-[#111]' : 'border-gray-100 bg-white'}`}>
-                      <div className={`font-mono text-[10px] tracking-widest mb-1 uppercase ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Prompt</div>
-                      <div className={`text-sm font-medium leading-relaxed ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-                        <span className="typing-cursor">Show me a user authentication flow</span>
-                      </div>
-                      <div className="mt-6 space-y-3 opacity-20">
-                        <div className={`h-2 rounded w-5/6 ${isDark ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
-                        <div className={`h-2 rounded w-4/6 ${isDark ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
-                        <div className={`h-2 rounded w-full ${isDark ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
-                      </div>
-                    </div>
-
-                    {/* Right Panel - Diagram Preview */}
-                    <div className={`flex-1 relative flex items-center justify-center p-8 bg-grid ${isDark ? 'bg-black' : 'bg-gray-50/50'}`}>
-                      <div className="relative z-10 w-full max-w-[240px] flex flex-col items-center gap-6 scale-90 sm:scale-100">
-
-                        {/* User Node */}
-                        <div
-                          className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center border animate-fade-in-up ${isDark ? 'bg-[#1A1A1A] border-gray-800' : 'bg-white border-gray-200'}`}
-                          style={{ animationDelay: "1s" }}
-                        >
-                          <span className={`material-symbols-outlined text-xl ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>person</span>
-                        </div>
-
-                        {/* Connector */}
-                        <div className={`h-8 w-px animate-fade-in-up ${isDark ? 'bg-gray-700' : 'bg-gray-300'}`} style={{ animationDelay: "1.2s" }}></div>
-
-                        {/* Auth Node */}
-                        <div
-                          className={`w-48 rounded-xl shadow-sm p-3 border flex items-center gap-3 animate-fade-in-up ${isDark ? 'bg-[#1A1A1A] border-gray-800' : 'bg-white border-gray-200'}`}
-                          style={{ animationDelay: "1.4s" }}
-                        >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[#1a4e6b] border ${isDark ? 'bg-orange-900/10 border-orange-900/20' : 'bg-orange-50 border-orange-100'}`}>
-                            <span className="material-symbols-outlined text-sm">lock</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className={`h-2 w-16 rounded mb-1.5 ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`}></div>
-                            <div className={`h-1.5 w-24 rounded ${isDark ? 'bg-gray-800/60' : 'bg-gray-100'}`}></div>
-                          </div>
-                        </div>
-
-                        {/* Branch Connectors */}
-                        <div className="w-full flex justify-between px-6 animate-fade-in-up" style={{ animationDelay: "1.8s" }}>
-                          <div className={`h-8 w-px -rotate-12 origin-top ${isDark ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
-                          <div className={`h-8 w-px rotate-12 origin-top ${isDark ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
-                        </div>
-
-                        {/* Result Nodes */}
-                        <div className="w-full flex justify-between gap-4 px-2 animate-fade-in-up" style={{ animationDelay: "2.1s" }}>
-                          <div className={`h-8 w-8 rounded-full border flex items-center justify-center ${isDark ? 'border-gray-800 bg-[#1A1A1A]' : 'border-gray-200 bg-white'}`}>
-                            <span className="material-symbols-outlined text-green-500 text-[14px]">check</span>
-                          </div>
-                          <div className={`h-8 w-8 rounded-full border flex items-center justify-center ${isDark ? 'border-gray-800 bg-[#1A1A1A]' : 'border-gray-200 bg-white'}`}>
-                            <span className="material-symbols-outlined text-red-500 text-[14px]">close</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className={`py-24 border-t ${isDark ? 'bg-black border-gray-800' : 'bg-white border-gray-100'}`}>
-          <div
-            ref={featuresAnim.ref}
-            className={`max-w-7xl mx-auto px-6 transition-all duration-700 ${featuresAnim.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-          >
-            <div className="text-center mb-20">
-              <h2 className={`font-sans text-4xl font-semibold tracking-tight mb-4 ${isDark ? 'text-[#F5F5F7]' : 'text-[#111]'}`}>
-                Why Diagflo?
+        <section
+          id="use-cases"
+          className={`py-14 sm:py-20 border-b ${
+            isDark ? "border-white/10" : "border-black/10"
+          }`}
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="max-w-3xl">
+              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
+                Not just system design.
               </h2>
-              <p className={`text-lg font-normal ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                Create professional diagrams in seconds, not hours.
+              <p
+                className={`mt-4 text-base sm:text-lg ${
+                  isDark ? "text-white/70" : "text-black/65"
+                }`}
+              >
+                Teams use Diagflo for anything that benefits from clear, shareable visual logic.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Feature 1 */}
-              <div className={`group p-8 rounded-2xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${isDark ? 'bg-[#121212] border-gray-800 hover:border-orange-500/50 hover:shadow-orange-500/10' : 'bg-[#f6f7f8] border-gray-100 hover:border-orange-300 hover:shadow-orange-200/50'}`}>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-6 bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined">bolt</span>
+            <div className="mt-10 grid gap-4 sm:grid-cols-2">
+              {useCaseTracks.map((track) => (
+                <div
+                  key={track.title}
+                  className={`rounded-2xl border p-5 ${
+                    isDark
+                      ? "border-white/10 bg-white/[0.03]"
+                      : "border-black/10 bg-white"
+                  }`}
+                >
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white">
+                    <track.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold">{track.title}</h3>
+                  <p className={`mt-2 text-sm leading-relaxed ${isDark ? "text-white/65" : "text-black/60"}`}>
+                    {track.body}
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold mb-3">Lightning Fast</h3>
-                <p className={`leading-relaxed text-sm ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                  Describe what you want in any language. Get a complete diagram in seconds with Archie's powerful generation.
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className={`group p-8 rounded-2xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${isDark ? 'bg-[#121212] border-gray-800 hover:border-orange-500/50 hover:shadow-orange-500/10' : 'bg-[#f6f7f8] border-gray-100 hover:border-orange-300 hover:shadow-orange-200/50'}`} style={{ transitionDelay: '100ms' }}>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-6 bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined">stars</span>
-                </div>
-                <h3 className="text-lg font-semibold mb-3">Smart Builder</h3>
-                <p className={`leading-relaxed text-sm ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                  Powered by Archie, our intelligent builder. Understands context, suggests improvements, and iterates with you.
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className={`group p-8 rounded-2xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${isDark ? 'bg-[#121212] border-gray-800 hover:border-orange-500/50 hover:shadow-orange-500/10' : 'bg-[#f6f7f8] border-gray-100 hover:border-orange-300 hover:shadow-orange-200/50'}`} style={{ transitionDelay: '200ms' }}>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-6 bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined">security</span>
-                </div>
-                <h3 className="text-lg font-semibold mb-3">Privacy First</h3>
-                <p className={`leading-relaxed text-sm ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                  Your API key stays in your browser. Diagrams are generated locally. No data stored on our servers.
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* How It Works Section */}
-        <section id="how-it-works" className="py-24 overflow-hidden relative">
+        <section
+          id="how-it-works"
+          className={`py-14 sm:py-20 border-b ${
+            isDark ? "border-white/10" : "border-black/10"
+          }`}
+        >
           <div
-            ref={howItWorksAnim.ref}
-            className={`max-w-7xl mx-auto px-6 transition-all duration-700 ${howItWorksAnim.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            ref={workflowReveal.ref}
+            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${
+              workflowReveal.visible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-7"
+            }`}
           >
-            <div className="text-center mb-20">
-              <h2 className={`font-sans text-4xl font-semibold tracking-tight mb-4 ${isDark ? 'text-[#F5F5F7]' : 'text-[#111]'}`}>
-                How It Works
+            <div className="max-w-3xl">
+              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
+                From rough idea to shippable artifact in three steps.
               </h2>
-              <p className={`text-lg font-normal ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                Three simple steps to visualize your thoughts.
-              </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-12 relative">
-              {/* Connector Line - animated gradient */}
-              <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-[2px] z-0">
-                <div className="h-full bg-gradient-to-r from-orange-500/0 via-orange-500 to-orange-500/0 animate-pulse"></div>
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
+              {workflowSteps.map((step) => (
+                <div
+                  key={step.id}
+                  className={`rounded-2xl border p-6 ${
+                    isDark
+                      ? "border-white/10 bg-black/35"
+                      : "border-black/10 bg-white"
+                  }`}
+                >
+                  <div
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-widest ${
+                      isDark
+                        ? "bg-orange-500/15 text-orange-300"
+                        : "bg-orange-50 text-orange-700"
+                    }`}
+                  >
+                    STEP {step.id}
+                  </div>
+                  <h3 className="mt-4 text-xl font-semibold">{step.title}</h3>
+                  <p
+                    className={`mt-3 text-sm leading-relaxed ${
+                      isDark ? "text-white/65" : "text-black/60"
+                    }`}
+                  >
+                    {step.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="security"
+          className={`py-14 sm:py-20 border-b ${
+            isDark ? "border-white/10" : "border-black/10"
+          }`}
+        >
+          <div
+            ref={trustReveal.ref}
+            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${
+              trustReveal.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
+            }`}
+          >
+            <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
+              <div>
+                <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
+                  Transparent by default.
+                </h2>
+                <p
+                  className={`mt-4 text-base sm:text-lg ${
+                    isDark ? "text-white/70" : "text-black/65"
+                  }`}
+                >
+                  Clear boundaries on where data lives and when it is shared.
+                </p>
+
+                <div className="mt-6 space-y-3">
+                  {dataHandling.map((item) => (
+                    <div key={item} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500" />
+                      <p className={isDark ? "text-white/70" : "text-black/65"}>{item}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Step 1 */}
-              <div className="relative z-10 flex flex-col items-center text-center group">
-                {/* Advanced Step Indicator */}
-                <div className="relative mb-8">
-                  {/* Outer rotating ring */}
-                  <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 opacity-20 blur-md group-hover:opacity-40 transition-opacity"></div>
-                  <div className="absolute -inset-1 rounded-full border-2 border-dashed border-orange-500/30 animate-spin-slow"></div>
-                  {/* Main badge */}
-                  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-xl shadow-orange-500/40 group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl font-bold text-white">01</span>
+              <div
+                className={`rounded-2xl border p-6 ${
+                  isDark
+                    ? "border-white/10 bg-white/[0.03]"
+                    : "border-black/10 bg-white"
+                }`}
+              >
+                <h3 className="text-lg font-semibold">Operational posture</h3>
+                <div className="mt-5 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400">
+                      <Lock className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Credential isolation</p>
+                      <p className={`text-sm ${isDark ? "text-white/60" : "text-black/60"}`}>
+                        API credentials are scoped to provider mode and explicit user configuration.
+                      </p>
+                    </div>
                   </div>
-                  {/* Pulse effect */}
-                  <div className="absolute inset-0 rounded-full bg-orange-500/30 animate-ping-slow"></div>
-                </div>
-                <h3 className="text-lg font-semibold mb-3">Describe Your Idea</h3>
-                <p className={`text-sm leading-relaxed max-w-xs ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                  Type what you want to visualize in plain language. "Show me a user authentication flow" works perfectly.
-                </p>
-              </div>
-
-              {/* Step 2 */}
-              <div className="relative z-10 flex flex-col items-center text-center group">
-                {/* Advanced Step Indicator */}
-                <div className="relative mb-8">
-                  {/* Outer rotating ring */}
-                  <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 opacity-20 blur-md group-hover:opacity-40 transition-opacity"></div>
-                  <div className="absolute -inset-1 rounded-full border-2 border-dashed border-orange-500/30 animate-spin-slow" style={{ animationDelay: '-2s' }}></div>
-                  {/* Main badge */}
-                  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-xl shadow-orange-500/40 group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl font-bold text-white">02</span>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400">
+                      <Database className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Controlled persistence</p>
+                      <p className={`text-sm ${isDark ? "text-white/60" : "text-black/60"}`}>
+                        Local history is browser-bound; remote persistence occurs only for deliberate sharing.
+                      </p>
+                    </div>
                   </div>
-                  {/* Pulse effect */}
-                  <div className="absolute inset-0 rounded-full bg-orange-500/30 animate-ping-slow" style={{ animationDelay: '-1s' }}></div>
                 </div>
-                <h3 className="text-lg font-semibold mb-3">Archie Generates Diagram</h3>
-                <p className={`text-sm leading-relaxed max-w-xs ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                  The builder interprets your request and generates a beautiful Mermaid diagram in seconds.
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="relative z-10 flex flex-col items-center text-center group">
-                {/* Advanced Step Indicator */}
-                <div className="relative mb-8">
-                  {/* Outer rotating ring */}
-                  <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 opacity-20 blur-md group-hover:opacity-40 transition-opacity"></div>
-                  <div className="absolute -inset-1 rounded-full border-2 border-dashed border-orange-500/30 animate-spin-slow" style={{ animationDelay: '-4s' }}></div>
-                  {/* Main badge */}
-                  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-xl shadow-orange-500/40 group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl font-bold text-white">03</span>
-                  </div>
-                  {/* Pulse effect */}
-                  <div className="absolute inset-0 rounded-full bg-orange-500/30 animate-ping-slow" style={{ animationDelay: '-2s' }}></div>
-                </div>
-                <h3 className="text-lg font-semibold mb-3">Iterate &amp; Export</h3>
-                <p className={`text-sm leading-relaxed max-w-xs ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-                  Refine with follow-up prompts. Export as SVG, PNG, or copy the Mermaid code directly.
-                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className={`py-24 relative ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
+        <section
+          className={`py-14 sm:py-20 border-b ${
+            isDark ? "border-white/10" : "border-black/10"
+          }`}
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="max-w-3xl">
+              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
+                Why teams pick Diagflo over generic tools.
+              </h2>
+            </div>
+
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
+              {switchReasons.map((reason) => (
+                <div
+                  key={reason.title}
+                  className={`rounded-2xl border p-6 ${
+                    isDark
+                      ? "border-white/10 bg-black/35"
+                      : "border-black/10 bg-white"
+                  }`}
+                >
+                  <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400">
+                    <reason.icon className="h-4 w-4" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold">{reason.title}</h3>
+                  <p className={`mt-2 text-sm leading-relaxed ${isDark ? "text-white/65" : "text-black/60"}`}>
+                    {reason.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-14 sm:py-20">
           <div
-            ref={ctaAnim.ref}
-            className={`max-w-4xl mx-auto px-6 text-center transition-all duration-700 ${ctaAnim.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            ref={ctaReveal.ref}
+            className={`mx-auto max-w-5xl px-4 sm:px-6 transition-all duration-700 ${
+              ctaReveal.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
+            }`}
           >
-            <h2 className={`font-sans text-4xl md:text-5xl font-semibold tracking-tight mb-6 ${isDark ? 'text-white' : 'text-[#111]'}`}>
-              Ready to create your first diagram?
-            </h2>
-            <p className={`text-lg mb-10 max-w-xl mx-auto font-normal ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-              Join thousands of developers and designers using Diagflo to visualize ideas faster.
+            <div
+              className={`rounded-3xl border p-6 sm:p-10 text-center ${
+                isDark
+                  ? "border-white/10 bg-gradient-to-b from-[#131923] to-[#0b0f15]"
+                  : "border-black/10 bg-gradient-to-b from-[#fff9f2] to-white"
+              }`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-500">
+                Ready To Build
+              </p>
+              <h2 className="mt-3 text-2xl sm:text-5xl font-semibold tracking-tight">
+                Create your next diagram in minutes.
+              </h2>
+              <p
+                className={`mx-auto mt-4 max-w-2xl text-base sm:text-lg ${
+                  isDark ? "text-white/70" : "text-black/65"
+                }`}
+              >
+                Start with a prompt, iterate with confidence, and ship diagrams that stay editable.
+              </p>
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <Link
+                  to="/app"
+                  className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all ${
+                    isDark
+                      ? "bg-white text-black hover:bg-white/90"
+                      : "bg-[#111827] text-white hover:bg-[#1f2937]"
+                  }`}
+                >
+                  Launch App
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/pricing"
+                  className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full border px-6 py-3 text-sm font-semibold ${
+                    isDark
+                      ? "border-white/20 text-white/90 hover:bg-white/10"
+                      : "border-black/15 text-black/80 hover:bg-black/5"
+                  }`}
+                >
+                  Compare Plans
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer
+          className={`border-t ${
+            isDark ? "border-white/10" : "border-black/10"
+          }`}
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 flex flex-col items-center gap-4 text-center">
+            <div className="flex items-center justify-center gap-4 text-sm">
+              <Link
+                to="/privacy"
+                className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}
+              >
+                Privacy
+              </Link>
+              <Link
+                to="/terms"
+                className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}
+              >
+                Terms
+              </Link>
+              <a
+                href="https://github.com/itsyashvardhan/diagflo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}
+              >
+                GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/diagflo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}
+              >
+                LinkedIn
+              </a>
+            </div>
+            <p className={isDark ? "text-white/55 text-sm" : "text-black/55 text-sm"}>
+              © {new Date().getFullYear()} Diagflo
             </p>
-            <Link
-              to="/app"
-              className={`inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-medium transition-all hover:scale-105 hover:shadow-lg ${isDark ? 'bg-white text-black hover:shadow-white/20' : 'bg-[#111] text-white hover:shadow-gray-900/30'}`}
-            >
-              Start Creating for Free
-              <span className="material-symbols-outlined text-sm">arrow_forward</span>
-            </Link>
           </div>
-        </section>
-
+        </footer>
       </main>
-
-      {/* Footer */}
-      <footer className={`py-8 border-t ${isDark ? 'border-gray-800' : 'border-gray-100'}`} role="contentinfo">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <DiagfloLogo className="w-7 h-7" />
-            <span className="font-sans font-semibold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">Diagflo</span>
-          </div>
-
-          {/* Social Links */}
-          <div className="flex items-center gap-3">
-            <a
-              href="https://github.com/itsyashvardhan/diagflo"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub"
-              className={`p-2 rounded-lg transition-all hover:scale-110 ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-[#111]'}`}
-            >
-              <GithubIcon className="w-5 h-5" aria-hidden="true" />
-            </a>
-            <a
-              href="https://www.linkedin.com/company/diagflo"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Connect on LinkedIn"
-              className={`p-2 rounded-lg transition-all hover:scale-110 ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-[#111]'}`}
-            >
-              <Linkedin className="w-5 h-5" aria-hidden="true" />
-            </a>
-          </div>
-
-          {/* Credits */}
-          <p className={`text-sm flex items-center gap-1 ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-            Designed with <span className={`mx-1 font-medium ${isDark ? 'text-white' : 'text-[#111]'}`}>Precision</span> by{" "}
-            <a href="https://github.com/itsyashvardhan" target="_blank" rel="noopener noreferrer" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`}>
-              @itsyashvardhan
-            </a>
-          </p>
-
-          {/* Legal Links */}
-          <div className={`flex items-center gap-4 text-xs ${isDark ? 'text-[#86868B]' : 'text-[#6E6E73]'}`}>
-            <Link to="/privacy" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`}>Privacy</Link>
-            <Link to="/terms" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-[#111]'}`}>Terms</Link>
-          </div>
-        </div>
-      </footer>
-
-      <style>{`
-        .font-sans {
-          font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .typing-cursor::after {
-          content: '|';
-          animation: blink 1s step-end infinite;
-        }
-
-        @keyframes blink {
-          50% { opacity: 0; }
-        }
-
-        .bg-grid {
-          background-image: radial-gradient(${isDark ? '#333' : '#e5e7eb'} 1px, transparent 1px);
-          background-size: 20px 20px;
-        }
-
-        @keyframes fadeInUp {
-          0% { opacity: 0; transform: translateY(20px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fade-in-up {
-          animation: fadeInUp 0.8s ease-out forwards;
-          will-change: opacity, transform;
-        }
-
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
-          will-change: transform;
-        }
-
-        @keyframes ping-slow {
-          0% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.1); opacity: 0.1; }
-          100% { transform: scale(1); opacity: 0.3; }
-        }
-
-        .animate-ping-slow {
-          animation: ping-slow 3s ease-in-out infinite;
-          will-change: transform, opacity;
-        }
-      `}</style>
     </div>
   );
 };
