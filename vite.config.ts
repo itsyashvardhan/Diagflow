@@ -9,12 +9,13 @@ function vercelApiDevPlugin(apiBaseUrl?: string): Plugin {
   const PREVIEW_PROXY_TIMEOUT_MS = 15000;
 
   const apiMiddleware = async (req: any, res: any, next: () => void) => {
-    // Only intercept /api/* POST requests
-    if (!req.url?.startsWith("/api/") || req.method !== "POST") {
+    // Only intercept /api/* requests
+    if (!req.url?.startsWith("/api/")) {
       return next();
     }
 
     const route = req.url.replace(/^\/api\//, "").replace(/\?.*$/, "");
+    const queryString = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
 
     try {
       // Dynamically import the serverless function handler in dev.
@@ -27,7 +28,7 @@ function vercelApiDevPlugin(apiBaseUrl?: string): Plugin {
 
       if (!ssrLoadModule) {
         if (apiBaseUrl) {
-          const target = `${apiBaseUrl.replace(/\/+$/, "")}/api/${route}`;
+          const target = `${apiBaseUrl.replace(/\/+$/, "")}/api/${route}${queryString}`;
           let targetUrl: URL;
           try {
             targetUrl = new URL(target);
@@ -56,11 +57,15 @@ function vercelApiDevPlugin(apiBaseUrl?: string): Plugin {
             return;
           }
 
-          const chunks: Buffer[] = [];
-          for await (const chunk of req) {
-            chunks.push(chunk);
+          const hasRequestBody = !["GET", "HEAD"].includes(String(req.method).toUpperCase());
+          let bodyStr = "";
+          if (hasRequestBody) {
+            const chunks: Buffer[] = [];
+            for await (const chunk of req) {
+              chunks.push(chunk);
+            }
+            bodyStr = Buffer.concat(chunks).toString("utf-8");
           }
-          const bodyStr = Buffer.concat(chunks).toString("utf-8");
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), PREVIEW_PROXY_TIMEOUT_MS);
           let upstream: Response;
@@ -113,13 +118,32 @@ function vercelApiDevPlugin(apiBaseUrl?: string): Plugin {
         return;
       }
 
-      // Collect request body
       const chunks: Buffer[] = [];
       for await (const chunk of req) {
         chunks.push(chunk);
       }
       const bodyStr = Buffer.concat(chunks).toString("utf-8");
-      const body = bodyStr ? JSON.parse(bodyStr) : {};
+      let body: unknown = {};
+      if (bodyStr) {
+        try {
+          body = JSON.parse(bodyStr);
+        } catch {
+          body = bodyStr;
+        }
+      }
+
+      const parsedUrl = new URL(req.url, "http://localhost");
+      const query: Record<string, string | string[]> = {};
+      for (const [key, value] of parsedUrl.searchParams.entries()) {
+        const existing = query[key];
+        if (existing === undefined) {
+          query[key] = value;
+        } else if (Array.isArray(existing)) {
+          existing.push(value);
+        } else {
+          query[key] = [existing, value];
+        }
+      }
 
       // Build mock VercelRequest/VercelResponse
       const mockReq = {
@@ -127,7 +151,7 @@ function vercelApiDevPlugin(apiBaseUrl?: string): Plugin {
         url: req.url,
         headers: req.headers,
         body,
-        query: {},
+        query,
       };
 
       const mockRes = {
