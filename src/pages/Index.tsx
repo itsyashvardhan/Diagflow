@@ -21,7 +21,9 @@ import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 import { useParams } from "react-router-dom";
 import { logger } from "@/lib/logger";
+import { detectDiagramType, sanitizeDiagram } from "@/lib/diagramSanitizer";
 import {
+  Home,
   Settings,
   Sparkles,
   History,
@@ -175,6 +177,7 @@ const Index = () => {
   const [mobileView, setMobileView] = useState<'chat' | 'canvas'>('chat');
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const generationRequestIdRef = useRef(0);
   const { toast } = useToast();
 
   // Swipe gesture handling for mobile
@@ -345,13 +348,21 @@ const Index = () => {
       status: "sending", // Start with sending status
     };
 
+    const requestId = generationRequestIdRef.current + 1;
+    generationRequestIdRef.current = requestId;
+
     const userMessageIndex = messages.length;
     const updatedHistory = [...messages, userMessage];
     setMessages(updatedHistory);
     setIsGenerating(true);
 
+    const isCurrentRequest = () => generationRequestIdRef.current === requestId;
+
     // Helper to update the user message status
     const updateMessageStatus = (updates: Partial<Message>) => {
+      if (!isCurrentRequest()) {
+        return;
+      }
       setMessages(prev => {
         const newMessages = [...prev];
         if (newMessages[userMessageIndex]) {
@@ -362,61 +373,90 @@ const Index = () => {
     };
 
     try {
-      let response;
-
-      if (settings.modelProvider === "nvidia") {
-        const { generateDiagramNvidia } = await import("@/lib/nvidia");
-        response = await generateDiagramNvidia(
-          content,
-          currentDiagram,
-          updatedHistory,
-          (retryInfo) => {
-            updateMessageStatus({
-              status: "queued",
-              retryAttempt: retryInfo.attempt,
-              estimatedWaitSeconds: retryInfo.estimatedWaitSeconds,
-              queueReason: retryInfo.reason,
-            });
-
-            toast({
-              title: retryInfo.reason,
-              description: `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries} • Wait ~${retryInfo.estimatedWaitSeconds}s`,
-            });
-          }
-        );
-      } else {
-        if (!settings.geminiApiKey) {
-          toast({
-            title: "API Key Required",
-            description: "Please add your Gemini API key in settings to use this model",
-            variant: "destructive",
-          });
-          setShowSettings(true);
-          setIsGenerating(false);
-          updateMessageStatus({ status: "error" });
+      const handleRetry = (retryInfo: {
+        attempt: number;
+        maxRetries: number;
+        estimatedWaitSeconds: number;
+        reason: string;
+      }) => {
+        if (!isCurrentRequest()) {
           return;
         }
 
-        response = await generateDiagram(
-          settings.geminiApiKey,
-          settings.geminiModel,
-          content,
-          currentDiagram,
-          updatedHistory,
-          (retryInfo) => {
-            updateMessageStatus({
-              status: "queued",
-              retryAttempt: retryInfo.attempt,
-              estimatedWaitSeconds: retryInfo.estimatedWaitSeconds,
-              queueReason: retryInfo.reason,
-            });
+        updateMessageStatus({
+          status: "queued",
+          retryAttempt: retryInfo.attempt,
+          estimatedWaitSeconds: retryInfo.estimatedWaitSeconds,
+          queueReason: retryInfo.reason,
+        });
 
-            toast({
-              title: retryInfo.reason,
-              description: `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries} • Wait ~${retryInfo.estimatedWaitSeconds}s`,
-            });
+        toast({
+          title: retryInfo.reason,
+          description: `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries} • Wait ~${retryInfo.estimatedWaitSeconds}s`,
+        });
+      };
+
+      if (!settings.geminiApiKey) {
+        toast({
+          title: "API Key Required",
+          description: "Please add your Gemini API key in settings to generate diagrams.",
+          variant: "destructive",
+        });
+        setShowSettings(true);
+        setIsGenerating(false);
+        updateMessageStatus({ status: "error" });
+        return;
+      }
+
+      const response = await generateDiagram(
+        settings.geminiApiKey,
+        settings.geminiModel,
+        content,
+        currentDiagram,
+        updatedHistory,
+        handleRetry
+      );
+
+      if (!isCurrentRequest()) {
+        return;
+      }
+
+      let nextDiagramCode = response.code;
+      const nextType = detectDiagramType(nextDiagramCode);
+
+      if (nextDiagramCode && nextType && nextType !== "chartjs") {
+        const { validateMermaidSyntax } = await import("@/lib/mermaid");
+
+        let healed = sanitizeDiagram(nextDiagramCode).code;
+        let validation = await validateMermaidSyntax(healed);
+
+        if (!validation.valid) {
+          // Keep only the diagram section if model leaked explanation text into code.
+          const declarationIndex = healed.search(/^\s*(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram-v2|stateDiagram|erDiagram|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|requirementDiagram|C4Context|C4Container|C4Component|C4Dynamic|C4Deployment|journey|xychart-beta|sankey-beta|block-beta|packet-beta|architecture-beta|kanban)\b/m);
+          if (declarationIndex > 0) {
+            healed = sanitizeDiagram(healed.slice(declarationIndex)).code;
+            validation = await validateMermaidSyntax(healed);
           }
-        );
+        }
+
+        if (validation.valid) {
+          if (healed !== nextDiagramCode) {
+            logger.warn("Auto-healed generated Mermaid syntax before apply", { type: nextType });
+          }
+          nextDiagramCode = healed;
+        } else {
+          logger.error("Generated Mermaid remained invalid; preserving previous diagram", {
+            type: nextType,
+            error: validation.error,
+          });
+
+          nextDiagramCode = currentDiagram || 'flowchart TD\n  A["Generation produced invalid syntax"] --> B["Please retry"]';
+          toast({
+            title: "Auto-healed invalid response",
+            description: "Received invalid Mermaid syntax. Preserved a stable diagram state.",
+            variant: "destructive",
+          });
+        }
       }
 
       const assistantMessage: Message = {
@@ -436,18 +476,18 @@ const Index = () => {
         estimatedWaitSeconds: undefined,
       };
 
-      const finalHistory = [
-        ...messages,
-        sentUserMessage,
-        assistantMessage,
-      ];
+      const finalHistory = [...updatedHistory];
+      if (finalHistory[userMessageIndex]) {
+        finalHistory[userMessageIndex] = sentUserMessage;
+      }
+      finalHistory.push(assistantMessage);
       setMessages(finalHistory);
-      setCurrentDiagram(response.code);
+      setCurrentDiagram(nextDiagramCode);
 
       // Add to history
       if (settings.autoSave) {
         const newEntry: DiagramHistoryEntry = {
-          code: response.code,
+          code: nextDiagramCode,
           prompt: content,
           timestamp: Date.now(),
         };
@@ -458,7 +498,7 @@ const Index = () => {
         storage.saveHistoryIndex(newHistory.length - 1);
       }
 
-      storage.saveCurrentDiagram(response.code);
+      storage.saveCurrentDiagram(nextDiagramCode);
       storage.saveChatHistory(finalHistory);
 
       toast({
@@ -466,6 +506,9 @@ const Index = () => {
         description: "Your system diagram is ready",
       });
     } catch (error) {
+      if (!isCurrentRequest()) {
+        return;
+      }
       logger.error("Generation error", error);
 
       // Mark user message as error
@@ -489,7 +532,9 @@ const Index = () => {
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      if (isCurrentRequest()) {
+        setIsGenerating(false);
+      }
     }
   };
 
@@ -542,6 +587,7 @@ const Index = () => {
   };
 
   const handleRefreshChat = () => {
+    generationRequestIdRef.current += 1;
     setMessages([]);
     storage.saveChatHistory([]);
     setCurrentDiagram("");
@@ -635,7 +681,7 @@ const Index = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-[100dvh] min-h-screen flex flex-col bg-background overflow-hidden">
       {/* Skip to content - Accessibility */}
       <a
         href="#app-workspace"
@@ -647,300 +693,244 @@ const Index = () => {
       {/* Gradient Background */}
       <div className="fixed inset-0 pointer-events-none" style={{ background: "var(--gradient-background)" }} />
 
-      {/* Header - Hybrid Layout: Logo Left | Nav Center | Utils Right */}
-      <header className="relative z-20 premium-blur border-b border-white/5 px-4 sm:px-6 py-3">
-        <div className="relative flex items-center justify-between">
-          {/* Left: Logo & Brand */}
-          <div className="flex items-center gap-3 group cursor-default shrink-0 z-10">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
-              <DiagfloLogo className="relative w-8 h-8 sm:w-9 sm:h-9 shadow-lg shadow-primary/20" />
-            </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight gradient-text hidden xs:block">Diagflo</h1>
-          </div>
-
-          {/* Center: Navigation Pill (absolutely positioned for true center) */}
-          <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1.5 px-1.5 py-1 glass-panel rounded-full shadow-inner">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowHistory(true)}
-              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
-            >
-              <History className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
-              <span className="text-xs font-medium hidden lg:inline">History</span>
-            </Button>
-
-            <div className="w-px h-4 bg-white/10 mx-0.5" />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowExamples(true)}
-              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
-            >
-              <Sparkles className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
-              <span className="text-xs font-medium hidden lg:inline">Examples</span>
-            </Button>
-
-            <div className="w-px h-4 bg-white/10 mx-0.5" />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSettings(true)}
-              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
-            >
-              <Settings className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
-              <span className="text-xs font-medium hidden lg:inline">Settings</span>
-            </Button>
-
-            <div className="w-px h-4 bg-white/10 mx-0.5" />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowShare(true)}
-              className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all text-primary shrink-0"
-            >
-              <Share2 className="w-3.5 h-3.5 lg:mr-2" />
-              <span className="text-xs font-medium hidden lg:inline">Share</span>
-            </Button>
-
-            <div className="w-px h-4 bg-white/10 mx-0.5" />
-
-            <Link to="/docs">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 rounded-full px-3 lg:px-4 hover:bg-white/5 transition-all shrink-0"
-              >
-                <BookOpen className="w-3.5 h-3.5 lg:mr-2 opacity-70" />
-                <span className="text-xs font-medium hidden lg:inline">Docs</span>
-              </Button>
-            </Link>
-          </div>
-
-          {/* Right: Utility Icons */}
-          <div className="flex items-center gap-1 shrink-0 z-10">
-            {/* Mobile-only: Compact nav buttons */}
-            <div className="flex md:hidden items-center gap-0.5 mr-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowHistory(true)}
-                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
-                title="History"
-              >
-                <History className="w-3.5 h-3.5 opacity-70" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowExamples(true)}
-                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
-                title="Examples"
-              >
-                <Sparkles className="w-3.5 h-3.5 opacity-70" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowSettings(true)}
-                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
-                title="Settings"
-              >
-                <Settings className="w-3.5 h-3.5 opacity-70" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowShare(true)}
-                className="w-8 h-8 rounded-full hover:bg-white/5 transition-all text-primary"
-                title="Share"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-
-            <div className="hidden sm:block w-px h-4 bg-white/10 mx-1" />
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowHelp(true)}
-              className="w-8 h-8 rounded-full hover:bg-white/5 transition-all"
-              title="Help Guide"
-            >
-              <HelpCircle className="w-3.5 h-3.5 opacity-70" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowCredits(true)}
-              className="w-8 h-8 rounded-full hover:bg-white/5 transition-all hover:text-foreground"
-              title="Credits & GitHub"
-            >
-              <Github className="w-3.5 h-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleFullscreen}
-              className="hidden sm:inline-flex w-8 h-8 rounded-full hover:bg-white/5 transition-all"
-              title="Toggle Fullscreen"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="w-3.5 h-3.5 opacity-70" />
-              ) : (
-                <Maximize2 className="w-3.5 h-3.5 opacity-70" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div
-        className="relative z-10 flex-1 flex flex-col lg:flex-row overflow-hidden"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        id="app-workspace"
-        role="main"
-        aria-label="Diagram workspace"
-      >
-        {/* Chat Column (resizable) */}
-        <div
-          style={{
-            width: isMobile ? '100%' : `${chatWidth}px`,
-            minWidth: isMobile ? '100%' : `${Math.floor(window.innerWidth * MIN_CHAT_WIDTH_RATIO)}px`,
-            display: isMobile && mobileView !== 'chat' ? 'none' : 'flex'
-          }}
-          className={`flex-col border-b lg:border-b-0 lg:border-r border-white/5 shrink-0 transition-[width] duration-300 ${isMobile ? 'pb-[60px]' : ''}`}
-        >
-          <div className="flex items-center justify-between px-6 py-3 lg:py-4 border-b border-white/5">
-            <div className="flex flex-col">
-              <span className="text-[9px] lg:text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/50">
-                Workspace
-              </span>
-              <span className="text-xs lg:text-sm font-semibold text-foreground/80">
-                Conversation
-              </span>
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 lg:h-8 gap-2 rounded-full px-2 lg:px-3 text-[10px] lg:text-xs opacity-60 hover:opacity-100 transition-opacity"
-              onClick={handleRefreshChat}
-              disabled={isGenerating}
-            >
-              <RotateCcw className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
-              <span>New</span>
-            </Button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {messages.length === 0 && (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center space-y-4 max-w-sm animate-slide-up">
-                  <div className="relative w-24 h-24 mx-auto mb-6 opacity-0 hidden">
-                  </div>
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground/90 leading-tight">Flow your thoughts</h2>
-                  <p className="text-sm text-muted-foreground/60 max-w-xs mx-auto">
-                    Visualize complex systems in seconds.
-                  </p>
-
-                  {/* Guided First Steps */}
-                  <StarterPrompts onSelect={(prompt) => handleSendMessage(prompt)} />
-
-                  {/* Quick Tips */}
-                  <QuickTips />
+      <div className="relative z-10 flex h-full min-h-0 flex-col">
+        <header className="premium-blur border-b border-white/10">
+          <div className="mx-auto w-full max-w-[1800px] px-3 sm:px-5 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="relative">
+                  <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-primary/60 to-accent/60 blur-sm opacity-50" />
+                  <DiagfloLogo className="relative w-8 h-8 sm:w-9 sm:h-9" />
+                </div>
+                <div className="leading-tight">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/70">Diagflo Workspace</p>
+                  <h1 className="text-sm sm:text-base font-semibold tracking-tight text-foreground/95">Visual Intelligence Studio</h1>
                 </div>
               </div>
-            )}
 
-            {messages.map((msg, i) => (
-              <ChatMessage key={i} message={msg} />
-            ))}
+              <div className="hidden md:flex items-center gap-1.5 p-1 rounded-full border border-white/10 bg-black/20">
+                <Link to="/">
+                  <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 hover:bg-white/10">
+                    <Home className="w-3.5 h-3.5 mr-1.5 opacity-80" />
+                    <span className="text-xs">Home</span>
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="sm" onClick={() => setShowHistory(true)} className="h-8 rounded-full px-3 hover:bg-white/10">
+                  <History className="w-3.5 h-3.5 mr-1.5 opacity-80" />
+                  <span className="text-xs">History</span>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowExamples(true)} className="h-8 rounded-full px-3 hover:bg-white/10">
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5 opacity-80" />
+                  <span className="text-xs">Examples</span>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)} className="h-8 rounded-full px-3 hover:bg-white/10">
+                  <Settings className="w-3.5 h-3.5 mr-1.5 opacity-80" />
+                  <span className="text-xs">Settings</span>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowShare(true)} className="h-8 rounded-full px-3 text-primary hover:bg-primary/10">
+                  <Share2 className="w-3.5 h-3.5 mr-1.5" />
+                  <span className="text-xs">Share</span>
+                </Button>
+                <Link to="/docs">
+                  <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 hover:bg-white/10">
+                    <BookOpen className="w-3.5 h-3.5 mr-1.5 opacity-80" />
+                    <span className="text-xs">Docs</span>
+                  </Button>
+                </Link>
+              </div>
 
-            {isGenerating && <TypingIndicator />}
-            <div ref={chatEndRef} />
+              <div className="flex items-center gap-1 shrink-0">
+                <div className="flex md:hidden items-center gap-1 mr-0.5">
+                  <Link to="/">
+                    <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full hover:bg-white/10" title="Home">
+                      <Home className="w-3.5 h-3.5 opacity-80" />
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="icon" onClick={() => setShowHistory(true)} className="w-8 h-8 rounded-full hover:bg-white/10" title="History">
+                    <History className="w-3.5 h-3.5 opacity-80" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setShowExamples(true)} className="w-8 h-8 rounded-full hover:bg-white/10" title="Examples">
+                    <Sparkles className="w-3.5 h-3.5 opacity-80" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} className="w-8 h-8 rounded-full hover:bg-white/10" title="Settings">
+                    <Settings className="w-3.5 h-3.5 opacity-80" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setShowShare(true)} className="w-8 h-8 rounded-full hover:bg-primary/10 text-primary" title="Share">
+                    <Share2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+
+                <div className="hidden sm:block w-px h-4 bg-white/10 mx-1" />
+
+                <Button variant="ghost" size="icon" onClick={() => setShowHelp(true)} className="w-8 h-8 rounded-full hover:bg-white/10" title="Help Guide">
+                  <HelpCircle className="w-3.5 h-3.5 opacity-80" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowCredits(true)} className="w-8 h-8 rounded-full hover:bg-white/10" title="Credits & GitHub">
+                  <Github className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleFullscreen}
+                  className="hidden sm:inline-flex w-8 h-8 rounded-full hover:bg-white/10"
+                  title="Toggle Fullscreen"
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="w-3.5 h-3.5 opacity-80" />
+                  ) : (
+                    <Maximize2 className="w-3.5 h-3.5 opacity-80" />
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
 
-          {/* Input */}
-          <div className="p-3 lg:p-6 border-t border-white/5 bg-black/5">
-            <ChatInput
-              onSend={handleSendMessage}
-              onShowExamples={() => setShowExamples(true)}
-              onOpenSettings={() => setShowSettings(true)}
-              hasApiKey={Boolean(settings.geminiApiKey)}
-              disabled={isGenerating}
-              modelProvider={settings.modelProvider}
-              onModelChange={(model) => handleSaveSettings({ ...settings, modelProvider: model })}
-            />
+          <div className="border-t border-white/5">
+            <div className="mx-auto w-full max-w-[1800px] px-3 sm:px-5 py-2 flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                Gemini API
+              </span>
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                Messages: {messages.length}
+              </span>
+              <span className="inline-flex items-center rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                Versions: {diagramHistory.length}
+              </span>
+              {isGenerating && (
+                <span className="inline-flex items-center rounded-full border border-accent/25 bg-accent/10 px-2.5 py-1 text-[11px] font-medium text-accent">
+                  Generating...
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* Tactical Resize handle (desktop only) */}
-        <div
-          role="separator"
-          onMouseDown={handleMouseDownResize}
-          onTouchStart={handleTouchStartResize}
-          className="hidden lg:flex w-1.5 hover:w-2 group relative items-center justify-center cursor-col-resize select-none transition-all duration-300"
-        >
-          {/* Main divider line */}
-          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/10 group-hover:bg-primary/40 transition-colors" />
+        <main className="flex-1 min-h-0 p-2 sm:p-3 lg:p-4">
+          <div
+            className="relative h-full min-h-0 overflow-hidden rounded-2xl border border-white/10 bg-black/25 shadow-[0_20px_60px_-24px_hsl(240_10%_2%_/_0.7)] flex flex-col lg:flex-row"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            id="app-workspace"
+            role="main"
+            aria-label="Diagram workspace"
+          >
+            {/* Chat Column (resizable) */}
+            <section
+              style={{
+                width: isMobile ? '100%' : `${chatWidth}px`,
+                minWidth: isMobile ? '100%' : `${Math.floor(window.innerWidth * MIN_CHAT_WIDTH_RATIO)}px`,
+                display: isMobile && mobileView !== 'chat' ? 'none' : 'flex'
+              }}
+              className={`flex-col min-h-0 shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 bg-background/25 ${isMobile ? 'pb-[calc(64px+env(safe-area-inset-bottom))]' : ''}`}
+            >
+              <div className="px-4 sm:px-5 py-3 border-b border-white/10 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/70">Conversation</p>
+                  <p className="text-sm font-medium text-foreground/90">Build and refine your diagram</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 gap-2 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-white/10"
+                  onClick={handleRefreshChat}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>New</span>
+                </Button>
+              </div>
 
-          {/* Subtle tactile strip */}
-          <div className="w-1 h-12 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        </div>
+              <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 sm:py-5 space-y-5">
+                {messages.length === 0 && (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center space-y-4 max-w-sm animate-slide-up">
+                      <h2 className="text-2xl font-bold tracking-tight text-foreground/95 leading-tight">Flow your thoughts</h2>
+                      <p className="text-sm text-muted-foreground/65 max-w-xs mx-auto">
+                        Visualize systems with production-grade structure and clarity.
+                      </p>
+                      <StarterPrompts onSelect={(prompt) => handleSendMessage(prompt)} />
+                      <QuickTips />
+                    </div>
+                  </div>
+                )}
 
-        {/* Diagram Column */}
-        <div
-          className="flex-1 flex flex-col relative bg-muted/10"
-          style={{
-            display: isMobile && mobileView !== 'canvas' ? 'none' : 'flex'
-          }}
-        >
-          {/* Floating Controls Overlay */}
-          <div className="absolute top-3 lg:top-6 left-3 lg:left-6 right-3 lg:right-6 z-10 flex flex-col lg:flex-row items-end lg:items-center justify-between pointer-events-none gap-2">
-            <div className="pointer-events-auto">
-              <DiagramControls
-                onUndo={handleUndo}
-                onRedo={handleRedo}
-                onViewImport={() => setShowCodeView(true)}
-                onExport={() => setShowExport(true)}
-                canUndo={historyIndex > 0}
-                canRedo={historyIndex < diagramHistory.length - 1}
-                disabled={!currentDiagram}
-              />
+                {messages.map((msg, i) => (
+                  <ChatMessage key={i} message={msg} />
+                ))}
+
+                {isGenerating && <TypingIndicator />}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="border-t border-white/10 bg-background/30 p-2 sm:p-3">
+                <ChatInput
+                  onSend={handleSendMessage}
+                  onShowExamples={() => setShowExamples(true)}
+                  onOpenSettings={() => setShowSettings(true)}
+                  hasApiKey={Boolean(settings.geminiApiKey)}
+                  disabled={isGenerating}
+                />
+              </div>
+            </section>
+
+            {/* Resize handle (desktop only) */}
+            <div
+              role="separator"
+              onMouseDown={handleMouseDownResize}
+              onTouchStart={handleTouchStartResize}
+              className="hidden lg:flex w-1.5 hover:w-2 group relative items-center justify-center cursor-col-resize select-none transition-all duration-300"
+            >
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/10 group-hover:bg-primary/40 transition-colors" />
+              <div className="w-1 h-12 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
 
-            <div className="pointer-events-auto">
-              <ZoomControls
-                zoom={zoom}
-                onZoomIn={handleZoomInExpanded}
-                onZoomOut={handleZoomOutExpanded}
-                onZoomReset={handleZoomResetExpanded}
-                onFitToScreen={handleFitToScreen}
-              />
-            </div>
-          </div>
+            {/* Diagram Column */}
+            <section
+              className="flex-1 min-h-0 flex flex-col relative bg-muted/15"
+              style={{
+                display: isMobile && mobileView !== 'canvas' ? 'none' : 'flex'
+              }}
+            >
+              <div className="absolute top-3 left-3 right-3 z-10 flex items-start justify-between gap-2 pointer-events-none">
+                <div className="pointer-events-auto">
+                  <DiagramControls
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    onViewImport={() => setShowCodeView(true)}
+                    onExport={() => setShowExport(true)}
+                    canUndo={historyIndex > 0}
+                    canRedo={historyIndex < diagramHistory.length - 1}
+                    disabled={!currentDiagram}
+                  />
+                </div>
+                <div className="pointer-events-auto flex items-center gap-2">
+                  {currentDiagram && (
+                    <span className="hidden sm:inline-flex items-center rounded-full border border-white/15 bg-black/45 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+                      Version {historyIndex >= 0 ? historyIndex + 1 : 1}
+                    </span>
+                  )}
+                  <ZoomControls
+                    zoom={zoom}
+                    onZoomIn={handleZoomInExpanded}
+                    onZoomOut={handleZoomOutExpanded}
+                    onZoomReset={handleZoomResetExpanded}
+                    onFitToScreen={handleFitToScreen}
+                  />
+                </div>
+              </div>
 
-          {/* Diagram Canvas */}
-          <div className="flex-1 dotted-grid relative" data-diagram-canvas>
-            <DiagramViewer
-              code={currentDiagram}
-              theme={settings.theme}
-              zoom={zoom}
-              onWheelZoom={handleWheelZoom}
-              prompt={diagramHistory[historyIndex]?.prompt}
-            />
+              <div className="flex-1 dotted-grid relative" data-diagram-canvas>
+                <DiagramViewer
+                  code={currentDiagram}
+                  theme={settings.theme}
+                  zoom={zoom}
+                  onWheelZoom={handleWheelZoom}
+                  prompt={diagramHistory[historyIndex]?.prompt}
+                />
+              </div>
+            </section>
           </div>
-        </div>
+        </main>
       </div>
 
       {/* Mobile Bottom Tab Bar */}

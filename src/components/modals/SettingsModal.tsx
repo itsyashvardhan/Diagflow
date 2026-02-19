@@ -44,78 +44,34 @@ export function SettingsModal({ open, onOpenChange, settings, onSave }: Settings
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Model Provider */}
           <div className="space-y-4 pt-2 border-t border-white/5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="modelProvider" className="font-semibold text-primary">Model Provider</Label>
-              <div className="flex bg-white/5 p-0.5 rounded-lg border border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setLocalSettings({ ...localSettings, modelProvider: "gemini" })}
-                  className={`px-3 py-1 text-xs rounded-md transition-all ${localSettings.modelProvider === "gemini"
-                      ? "bg-white/10 text-white border border-white/10 shadow-sm"
-                      : "text-muted-foreground hover:text-white"
-                    }`}
+            <div className="space-y-2">
+              <Label htmlFor="apiKey" className="font-semibold text-primary">
+                Gemini API Key (saved locally)
+              </Label>
+              <Input
+                id="apiKey"
+                type="password"
+                placeholder="Enter your API key..."
+                value={localSettings.geminiApiKey || ""}
+                onChange={(e) =>
+                  setLocalSettings({ ...localSettings, geminiApiKey: e.target.value })
+                }
+                className="bg-background/50 border-white/5 focus:border-primary/50"
+              />
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                Get your key from{" "}
+                <a
+                  href="https://aistudio.google.com/app/api-keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-0.5"
                 >
-                  Gemini
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLocalSettings({ ...localSettings, modelProvider: "nvidia" })}
-                  className={`px-3 py-1 text-xs rounded-md transition-all ${localSettings.modelProvider === "nvidia"
-                      ? "bg-white/10 text-white border border-white/10 shadow-sm"
-                      : "text-muted-foreground hover:text-white"
-                    }`}
-                >
-                  NVIDIA
-                </button>
-              </div>
+                  Google AI Studio
+                  <ExternalLink className="w-2 h-2" />
+                </a>
+              </p>
             </div>
-
-            {localSettings.modelProvider === "gemini" ? (
-              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                {/* <div className="space-y-2">
-                  <Label>Gemini Model</Label>
-                  <div className="rounded-md border border-white/10 bg-background/50 px-3 py-2 text-sm text-foreground/90">
-                    gemini-2.5-flash-lit
-                  </div>
-                </div> */}
-                <div className="space-y-2">
-                  <Label htmlFor="apiKey">API Key (saved locally)</Label>
-                  <Input
-                    id="apiKey"
-                    type="password"
-                    placeholder="Enter your API key..."
-                    value={localSettings.geminiApiKey || ""}
-                    onChange={(e) =>
-                      setLocalSettings({ ...localSettings, geminiApiKey: e.target.value })
-                    }
-                    className="bg-background/50 border-white/5 focus:border-primary/50"
-                  />
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    Get your key from{" "}
-                    <a
-                      href="https://aistudio.google.com/app/api-keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline inline-flex items-center gap-0.5"
-                    >
-                      Google AI Studio
-                      <ExternalLink className="w-2 h-2" />
-                    </a>
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="space-y-2">
-                  <Label>NVIDIA Model</Label>
-                  <div className="rounded-md border border-white/10 bg-background/50 px-3 py-2 text-sm text-foreground/90">
-                    nvidia/nemotron
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="space-y-4 pt-2 border-t border-white/5">
