@@ -21,6 +21,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { useCanonical } from "@/hooks/use-canonical";
+import { HeroAnimation } from "@/components/landing/HeroAnimation";
 
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -167,38 +168,33 @@ const LandingPage = () => {
 
   return (
     <div
-      className={`min-h-screen overflow-x-hidden transition-colors duration-300 ${
-        isDark ? "bg-[#090a0f] text-[#f5f7fb]" : "bg-[#f4f6f8] text-[#111827]"
-      }`}
+      className={`min-h-screen overflow-x-hidden transition-colors duration-300 ${isDark ? "bg-[#090a0f] text-[#f5f7fb]" : "bg-[#f4f6f8] text-[#111827]"
+        }`}
     >
       <main id="main-content">
         <section
-          className={`relative overflow-hidden border-b ${
-            isDark ? "border-white/10" : "border-black/10"
-          }`}
+          className={`relative overflow-hidden border-b ${isDark ? "border-white/10" : "border-black/10"
+            }`}
           aria-labelledby="hero-heading"
         >
           <div className="pointer-events-none absolute inset-0">
             <div
-              className={`absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full blur-3xl ${
-                isDark ? "bg-orange-500/18" : "bg-orange-300/30"
-              }`}
+              className={`absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full blur-3xl ${isDark ? "bg-orange-500/18" : "bg-orange-300/30"
+                }`}
             />
             <div
-              className={`absolute bottom-0 right-0 h-72 w-72 rounded-full blur-3xl ${
-                isDark ? "bg-amber-500/10" : "bg-amber-200/35"
-              }`}
+              className={`absolute bottom-0 right-0 h-72 w-72 rounded-full blur-3xl ${isDark ? "bg-amber-500/10" : "bg-amber-200/35"
+                }`}
             />
           </div>
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pb-14 sm:pb-20 pt-20 sm:pt-24 lg:pt-28">
             <div className="grid min-w-0 items-center gap-8 sm:gap-12 lg:grid-cols-[1.15fr_0.85fr]">
               <div
-                className={`min-w-0 transition-all duration-700 ${
-                  heroReady
+                className={`min-w-0 transition-all duration-700 ${heroReady
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-6"
-                }`}
+                  }`}
               >
                 <h1
                   id="hero-heading"
@@ -207,9 +203,8 @@ const LandingPage = () => {
                   Turn complex ideas into clear diagrams.
                 </h1>
                 <p
-                  className={`mt-5 sm:mt-6 max-w-2xl text-base sm:text-lg leading-relaxed ${
-                    isDark ? "text-white/70" : "text-black/65"
-                  }`}
+                  className={`mt-5 sm:mt-6 max-w-2xl text-base sm:text-lg leading-relaxed ${isDark ? "text-white/70" : "text-black/65"
+                    }`}
                 >
                   Describe. Visualise. Done.
                 </p>
@@ -217,22 +212,20 @@ const LandingPage = () => {
                 <div className="mt-8 sm:mt-9 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
                   <Link
                     to="/app"
-                    className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full px-5 sm:px-6 py-3 text-sm font-semibold transition-all duration-200 ${
-                      isDark
+                    className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full px-5 sm:px-6 py-3 text-sm font-semibold transition-all duration-200 ${isDark
                         ? "bg-white text-black hover:bg-white/90"
                         : "bg-[#111827] text-white hover:bg-[#1f2937]"
-                    }`}
+                      }`}
                   >
                     Open Workspace
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
                     to="/docs"
-                    className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full border px-5 sm:px-6 py-3 text-sm font-semibold transition-colors ${
-                      isDark
+                    className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full border px-5 sm:px-6 py-3 text-sm font-semibold transition-colors ${isDark
                         ? "border-white/20 text-white/90 hover:bg-white/10"
                         : "border-black/15 text-black/80 hover:bg-black/5"
-                    }`}
+                      }`}
                   >
                     View Docs
                   </Link>
@@ -264,104 +257,8 @@ const LandingPage = () => {
                   ))}
                 </div> */}
               </div>
-
-              <div
-                className={`min-w-0 transition-all duration-700 delay-100 ${
-                  heroReady
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-6"
-                }`}
-              >
-                <div
-                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-xl ${
-                    isDark
-                      ? "border-white/10 bg-black/40"
-                      : "border-black/10 bg-white/80"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-orange-500">
-                      Live Preview
-                    </p>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] ${
-                        isDark
-                          ? "bg-emerald-500/15 text-emerald-300"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}
-                    >
-                      <Clock3 className="h-3.5 w-3.5" />
-                      ~8s render
-                    </span>
-                  </div>
-
-                  <div
-                    className={`mt-4 rounded-xl border p-3 text-sm ${
-                      isDark
-                        ? "border-white/10 bg-white/[0.03]"
-                        : "border-black/10 bg-black/[0.03]"
-                    }`}
-                  >
-                    <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-                      Prompt
-                    </p>
-                    <p className="break-words">
-                      Map the customer onboarding workflow, including KYC checks, handoffs, and escalation paths.
-                    </p>
-                  </div>
-
-                  <div
-                    className={`mt-3 rounded-xl border p-3 ${
-                      isDark
-                        ? "border-white/10 bg-[#0b1016]"
-                        : "border-black/10 bg-[#f8fafc]"
-                    }`}
-                  >
-                    <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
-                      Output
-                    </p>
-                    <pre className="max-w-full overflow-x-auto whitespace-pre text-xs leading-relaxed">
-                      <code>{`flowchart LR
-  Lead["New Customer"] --> Verify["KYC + Verification"]
-  Verify --> Account["Account Setup"]
-  Account --> Success["Activation Complete"]
-  Verify -. issue .-> Escalate["Manual Review Queue"]`}</code>
-                    </pre>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-1 min-[420px]:grid-cols-3 gap-2 text-center">
-                    <div
-                      className={`rounded-lg border p-2 ${
-                        isDark
-                          ? "border-white/10 bg-white/[0.02]"
-                          : "border-black/10 bg-white"
-                      }`}
-                    >
-                      <p className="text-[11px] text-muted-foreground">Types</p>
-                      <p className="text-sm font-semibold">20+</p>
-                    </div>
-                    <div
-                      className={`rounded-lg border p-2 ${
-                        isDark
-                          ? "border-white/10 bg-white/[0.02]"
-                          : "border-black/10 bg-white"
-                      }`}
-                    >
-                      <p className="text-[11px] text-muted-foreground">Iterations</p>
-                      <p className="text-sm font-semibold">Unlimited</p>
-                    </div>
-                    <div
-                      className={`rounded-lg border p-2 ${
-                        isDark
-                          ? "border-white/10 bg-white/[0.02]"
-                          : "border-black/10 bg-white"
-                      }`}
-                    >
-                      <p className="text-[11px] text-muted-foreground">Exports</p>
-                      <p className="text-sm font-semibold">Ready</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="relative mt-8 sm:mt-0 flex items-center justify-center">
+                <HeroAnimation />
               </div>
             </div>
           </div>
@@ -369,26 +266,23 @@ const LandingPage = () => {
 
         <section
           id="features"
-          className={`py-14 sm:py-20 border-b ${
-            isDark ? "border-white/10" : "border-black/10"
-          }`}
+          className={`py-14 sm:py-20 border-b ${isDark ? "border-white/10" : "border-black/10"
+            }`}
         >
           <div
             ref={capabilitiesReveal.ref}
-            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${
-              capabilitiesReveal.visible
+            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${capabilitiesReveal.visible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-7"
-            }`}
+              }`}
           >
             <div className="max-w-3xl">
               <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
                 Built for real team workflows, not just demos.
               </h2>
               <p
-                className={`mt-4 text-base sm:text-lg ${
-                  isDark ? "text-white/70" : "text-black/65"
-                }`}
+                className={`mt-4 text-base sm:text-lg ${isDark ? "text-white/70" : "text-black/65"
+                  }`}
               >
                 Every part of the product is optimized for fast iteration, clean
                 output, and fewer broken diagram states.
@@ -399,20 +293,18 @@ const LandingPage = () => {
               {capabilityCards.map((card) => (
                 <div
                   key={card.title}
-                  className={`rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${
-                    isDark
+                  className={`rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${isDark
                       ? "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
                       : "border-black/10 bg-white hover:bg-[#fffaf5]"
-                  }`}
+                    }`}
                 >
                   <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white">
                     <card.icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-lg font-semibold">{card.title}</h3>
                   <p
-                    className={`mt-2 text-sm leading-relaxed ${
-                      isDark ? "text-white/65" : "text-black/60"
-                    }`}
+                    className={`mt-2 text-sm leading-relaxed ${isDark ? "text-white/65" : "text-black/60"
+                      }`}
                   >
                     {card.description}
                   </p>
@@ -424,9 +316,8 @@ const LandingPage = () => {
 
         <section
           id="use-cases"
-          className={`py-14 sm:py-20 border-b ${
-            isDark ? "border-white/10" : "border-black/10"
-          }`}
+          className={`py-14 sm:py-20 border-b ${isDark ? "border-white/10" : "border-black/10"
+            }`}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="max-w-3xl">
@@ -434,9 +325,8 @@ const LandingPage = () => {
                 Not just system design.
               </h2>
               <p
-                className={`mt-4 text-base sm:text-lg ${
-                  isDark ? "text-white/70" : "text-black/65"
-                }`}
+                className={`mt-4 text-base sm:text-lg ${isDark ? "text-white/70" : "text-black/65"
+                  }`}
               >
                 Teams use Diagflo for anything that benefits from clear, shareable visual logic.
               </p>
@@ -446,11 +336,10 @@ const LandingPage = () => {
               {useCaseTracks.map((track) => (
                 <div
                   key={track.title}
-                  className={`rounded-2xl border p-5 ${
-                    isDark
+                  className={`rounded-2xl border p-5 ${isDark
                       ? "border-white/10 bg-white/[0.03]"
                       : "border-black/10 bg-white"
-                  }`}
+                    }`}
                 >
                   <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white">
                     <track.icon className="h-5 w-5" />
@@ -467,17 +356,15 @@ const LandingPage = () => {
 
         <section
           id="how-it-works"
-          className={`py-14 sm:py-20 border-b ${
-            isDark ? "border-white/10" : "border-black/10"
-          }`}
+          className={`py-14 sm:py-20 border-b ${isDark ? "border-white/10" : "border-black/10"
+            }`}
         >
           <div
             ref={workflowReveal.ref}
-            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${
-              workflowReveal.visible
+            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${workflowReveal.visible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-7"
-            }`}
+              }`}
           >
             <div className="max-w-3xl">
               <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
@@ -489,26 +376,23 @@ const LandingPage = () => {
               {workflowSteps.map((step) => (
                 <div
                   key={step.id}
-                  className={`rounded-2xl border p-6 ${
-                    isDark
+                  className={`rounded-2xl border p-6 ${isDark
                       ? "border-white/10 bg-black/35"
                       : "border-black/10 bg-white"
-                  }`}
+                    }`}
                 >
                   <div
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-widest ${
-                      isDark
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-widest ${isDark
                         ? "bg-orange-500/15 text-orange-300"
                         : "bg-orange-50 text-orange-700"
-                    }`}
+                      }`}
                   >
                     STEP {step.id}
                   </div>
                   <h3 className="mt-4 text-xl font-semibold">{step.title}</h3>
                   <p
-                    className={`mt-3 text-sm leading-relaxed ${
-                      isDark ? "text-white/65" : "text-black/60"
-                    }`}
+                    className={`mt-3 text-sm leading-relaxed ${isDark ? "text-white/65" : "text-black/60"
+                      }`}
                   >
                     {step.body}
                   </p>
@@ -520,15 +404,13 @@ const LandingPage = () => {
 
         <section
           id="security"
-          className={`py-14 sm:py-20 border-b ${
-            isDark ? "border-white/10" : "border-black/10"
-          }`}
+          className={`py-14 sm:py-20 border-b ${isDark ? "border-white/10" : "border-black/10"
+            }`}
         >
           <div
             ref={trustReveal.ref}
-            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${
-              trustReveal.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
-            }`}
+            className={`mx-auto max-w-7xl px-4 sm:px-6 transition-all duration-700 ${trustReveal.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
+              }`}
           >
             <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
               <div>
@@ -536,9 +418,8 @@ const LandingPage = () => {
                   Transparent by default.
                 </h2>
                 <p
-                  className={`mt-4 text-base sm:text-lg ${
-                    isDark ? "text-white/70" : "text-black/65"
-                  }`}
+                  className={`mt-4 text-base sm:text-lg ${isDark ? "text-white/70" : "text-black/65"
+                    }`}
                 >
                   Clear boundaries on where data lives and when it is shared.
                 </p>
@@ -554,11 +435,10 @@ const LandingPage = () => {
               </div>
 
               <div
-                className={`rounded-2xl border p-6 ${
-                  isDark
+                className={`rounded-2xl border p-6 ${isDark
                     ? "border-white/10 bg-white/[0.03]"
                     : "border-black/10 bg-white"
-                }`}
+                  }`}
               >
                 <h3 className="text-lg font-semibold">Operational posture</h3>
                 <div className="mt-5 space-y-4">
@@ -591,9 +471,8 @@ const LandingPage = () => {
         </section>
 
         <section
-          className={`py-14 sm:py-20 border-b ${
-            isDark ? "border-white/10" : "border-black/10"
-          }`}
+          className={`py-14 sm:py-20 border-b ${isDark ? "border-white/10" : "border-black/10"
+            }`}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="max-w-3xl">
@@ -606,11 +485,10 @@ const LandingPage = () => {
               {switchReasons.map((reason) => (
                 <div
                   key={reason.title}
-                  className={`rounded-2xl border p-6 ${
-                    isDark
+                  className={`rounded-2xl border p-6 ${isDark
                       ? "border-white/10 bg-black/35"
                       : "border-black/10 bg-white"
-                  }`}
+                    }`}
                 >
                   <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400">
                     <reason.icon className="h-4 w-4" />
@@ -628,16 +506,14 @@ const LandingPage = () => {
         <section className="py-14 sm:py-20">
           <div
             ref={ctaReveal.ref}
-            className={`mx-auto max-w-5xl px-4 sm:px-6 transition-all duration-700 ${
-              ctaReveal.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
-            }`}
+            className={`mx-auto max-w-5xl px-4 sm:px-6 transition-all duration-700 ${ctaReveal.visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
+              }`}
           >
             <div
-              className={`rounded-3xl border p-6 sm:p-10 text-center ${
-                isDark
+              className={`rounded-3xl border p-6 sm:p-10 text-center ${isDark
                   ? "border-white/10 bg-gradient-to-b from-[#131923] to-[#0b0f15]"
                   : "border-black/10 bg-gradient-to-b from-[#fff9f2] to-white"
-              }`}
+                }`}
             >
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-500">
                 Ready To Build
@@ -646,25 +522,23 @@ const LandingPage = () => {
                 Create your next diagram in minutes.
               </h2>
               <p
-                className={`mx-auto mt-4 max-w-2xl text-base sm:text-lg ${
-                  isDark ? "text-white/70" : "text-black/65"
-                }`}
+                className={`mx-auto mt-4 max-w-2xl text-base sm:text-lg ${isDark ? "text-white/70" : "text-black/65"
+                  }`}
               >
                 Start with a prompt, iterate with confidence, and ship diagrams that stay editable.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Link
                   to="/app"
-                  className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all ${
-                    isDark
+                  className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all ${isDark
                       ? "bg-white text-black hover:bg-white/90"
                       : "bg-[#111827] text-white hover:bg-[#1f2937]"
-                  }`}
+                    }`}
                 >
                   Launch App
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link
+                {/* <Link
                   to="/pricing"
                   className={`w-full sm:w-auto justify-center inline-flex items-center gap-2 rounded-full border px-6 py-3 text-sm font-semibold ${
                     isDark
@@ -673,16 +547,15 @@ const LandingPage = () => {
                   }`}
                 >
                   Compare Plans
-                </Link>
+                </Link> */}
               </div>
             </div>
           </div>
         </section>
 
         <footer
-          className={`border-t ${
-            isDark ? "border-white/10" : "border-black/10"
-          }`}
+          className={`border-t ${isDark ? "border-white/10" : "border-black/10"
+            }`}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 flex flex-col items-center gap-4 text-center">
             <div className="flex items-center justify-center gap-4 text-sm">

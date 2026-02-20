@@ -84,14 +84,7 @@ const LandingNavbar = () => {
             <Link to="/docs" className={`px-3 py-1.5 rounded-full text-sm ${navLinkTone}`}>
               Docs
             </Link>
-            <Link
-              to="/pricing"
-              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                isDark ? "text-orange-300 hover:bg-orange-400/10" : "text-orange-700 hover:bg-orange-100"
-              }`}
-            >
-              Pricing
-            </Link>
+
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
