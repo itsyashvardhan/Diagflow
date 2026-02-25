@@ -34,7 +34,7 @@ export function ZoomControls({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="premium-blur border-white/10">
-            <p className="text-xs">Zoom out (Ctrl+-)</p>
+            <p className="text-xs"></p>
           </TooltipContent>
         </Tooltip>
 
@@ -50,7 +50,7 @@ export function ZoomControls({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="premium-blur border-white/10">
-            <p className="text-xs">Reset (Ctrl+0)</p>
+            <p className="text-xs"></p>
           </TooltipContent>
         </Tooltip>
 
@@ -68,7 +68,7 @@ export function ZoomControls({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="premium-blur border-white/10">
-            <p className="text-xs">Zoom in (Ctrl++)</p>
+            <p className="text-xs"></p>
           </TooltipContent>
         </Tooltip>
 

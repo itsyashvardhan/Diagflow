@@ -177,6 +177,7 @@ const Index = () => {
   const [mobileView, setMobileView] = useState<'chat' | 'canvas'>('chat');
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const scrollTriggerRef = useRef(0); // incremented on user send to trigger scroll
   const generationRequestIdRef = useRef(0);
   const { toast } = useToast();
 
@@ -277,10 +278,13 @@ const Index = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareId]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom only on user-initiated sends (not during streaming chunks)
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (scrollTriggerRef.current > 0) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollTriggerRef.current]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -417,26 +421,51 @@ const Index = () => {
       const assistantMessageIndex = updatedHistory.length;
       setMessages(prev => [...prev, streamingAssistantMessage]);
 
+      // Scroll once now that the placeholder is added
+      scrollTriggerRef.current += 1;
+
       const response = await generateDiagramStream(
         settings.geminiApiKey,
         settings.geminiModel,
         content,
         currentDiagram,
         updatedHistory,
-        (_delta, accumulated) => {
-          if (!isCurrentRequest()) return;
-          // Update the assistant message content incrementally
-          setMessages(prev => {
-            const newMessages = [...prev];
-            if (newMessages[assistantMessageIndex]) {
-              newMessages[assistantMessageIndex] = {
-                ...newMessages[assistantMessageIndex],
-                content: accumulated,
-              };
+        (() => {
+          // Throttle streaming UI updates to ~60fps using rAF
+          let rafId = 0;
+          let latestAccumulated = "";
+
+          // Strip fenced code blocks so users never see raw diagram code in chat
+          const stripCodeBlocks = (text: string): string => {
+            // Remove complete fenced blocks: ```mermaid ... ``` or ```chartjs ... ```
+            let cleaned = text.replace(/```(?:mermaid|chartjs)\s*[\s\S]*?```/gi, "");
+            // Remove incomplete/in-progress fenced blocks (stream hasn't closed them yet)
+            cleaned = cleaned.replace(/```(?:mermaid|chartjs)\s*[\s\S]*$/gi, "");
+            return cleaned.trim();
+          };
+
+          return (_delta: string, accumulated: string) => {
+            if (!isCurrentRequest()) return;
+            latestAccumulated = accumulated;
+
+            if (!rafId) {
+              rafId = requestAnimationFrame(() => {
+                rafId = 0;
+                const displayText = stripCodeBlocks(latestAccumulated);
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  if (newMessages[assistantMessageIndex]) {
+                    newMessages[assistantMessageIndex] = {
+                      ...newMessages[assistantMessageIndex],
+                      content: displayText,
+                    };
+                  }
+                  return newMessages;
+                });
+              });
             }
-            return newMessages;
-          });
-        },
+          };
+        })(),
         handleRetry
       );
 

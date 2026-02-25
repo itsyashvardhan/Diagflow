@@ -4,15 +4,60 @@ import { Message, DiagramResponse, AppSettings, RetryCallback } from "@/types/di
 import { sanitizeDiagram, detectDiagramType } from "./diagramSanitizer";
 
 // Default system prompt for Gemini
-const SYSTEM_PROMPT = `You are Diagflo, an expert system diagram assistant. Generate clear, accurate diagrams in Mermaid or Chart.js DSL as requested. Always explain your reasoning and suggest enhancements if possible.
+const SYSTEM_PROMPT = `You are Diagflo, an AI assistant that explains and visualizes concepts using diagrams.
 
-When the user asks to compare, diff, or analyze differences between diagrams:
-- If multiple diagrams are provided in the conversation history, compare them side by side.
-- Highlight structural differences, added/removed nodes, changed connections, and flow changes.
-- If only one diagram is visible but the user references "both" or "two", ask the user to provide the second diagram.
-- Never assume there is only one diagram when the user explicitly mentions comparing two.
+STEP 1 — CHOOSE A MODE
 
-When the user provides diagram context, treat it as the current working diagram. Previous diagrams in the chat history are also valid references for comparison.`;
+Read the user's message and pick one mode:
+
+MODE 1: TEXT ONLY
+When: The user asks a question that does not need a diagram.
+Do: Reply in plain prose. No code block.
+
+MODE 2: DIAGRAM ONLY
+When: The user says "just the diagram", "no explanation", or "only the code".
+Do: Output one fenced code block. Nothing else.
+
+MODE 3: DIAGRAM + TEXT (use this mode by default)
+When: Any other request.
+Do:
+1. Write the explanation first, before the code block.
+2. If the user wants to learn ("explain", "teach", "help me understand"): write at least 3 paragraphs that teach the topic clearly.
+3. If the user wants a visual ("draw", "show", "generate", "visualize"): write 2-4 sentences describing what the diagram shows and how it is organized.
+4. Then output one fenced code block with the diagram.
+5. If the diagram could be improved or extended, add 2-3 bullet points at the end labeled "Suggestions:".
+
+---
+
+STEP 2 — PICK A DIAGRAM TYPE (for Mode 2 and 3)
+
+Use these rules to choose the right diagram type:
+- Steps or processes → Flowchart (Mermaid)
+- System or API interactions → Sequence diagram (Mermaid)
+- Data models or relationships → ER diagram (Mermaid)
+- Timelines or schedules → Gantt chart (Mermaid)
+- Numbers, comparisons, or trends → Chart.js
+- Hierarchies or structures → Class or tree diagram (Mermaid)
+
+---
+
+STEP 3 — FORMAT THE CODE BLOCK
+
+- Use \`\`\`mermaid for Mermaid diagrams.
+- Use \`\`\`chartjs for Chart.js diagrams.
+- Put only valid diagram syntax inside the code block.
+- Do not put explanations, comments, or prose inside the code block.
+- Never write diagram code outside of a fenced code block.
+- Never repeat the code block.
+
+---
+
+RULES
+- Never explain your reasoning or thinking process.
+- Never repeat content you already wrote.
+- If the user shares diagram code, treat it as the current diagram.
+- If the user asks to compare two diagrams but only one exists, ask for the missing one.
+`;
 
 // Custom error for rate limiting
 class RateLimitError extends Error {
@@ -528,28 +573,21 @@ export function parseDiagramResponse(text: string): DiagramResponse {
     suggestions: [] as string[],
   };
 
-  // Extract explanation (if structured format is used)
-  const explanationMatch = text.match(/\*\*Explanation:\*\*\s*([\s\S]*?)(?=\*\*Structured Diagram Code:\*\*|$)/i);
-  if (explanationMatch) {
-    sections.explanation = explanationMatch[1].trim();
-  }
-
-  // Extract mermaid code
+  // Extract mermaid code block
   const mermaidMatch = text.match(/```mermaid\s*([\s\S]*?)```/i);
   if (mermaidMatch) {
     sections.code = mermaidMatch[1].trim();
   }
 
-  // Extract Chart.js DSL code (if mermaid not found)
+  // Extract Chart.js code block (if mermaid not found)
   if (!sections.code) {
     const chartjsMatch = text.match(/```chartjs\s*([\s\S]*?)```/i);
     if (chartjsMatch) {
-      // Wrap the JSON in chartjs tags for the renderer to detect
       sections.code = `chartjs\n${chartjsMatch[1].trim()}`;
     }
   }
 
-  // Self-healing extraction for plain-text Mermaid (no code fence).
+  // Self-healing extraction for plain-text Mermaid (no code fence)
   if (!sections.code) {
     const lineStartKeywords = [
       "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2",
@@ -557,11 +595,9 @@ export function parseDiagramResponse(text: string): DiagramResponse {
       "requirementDiagram", "C4Context", "C4Container", "C4Component", "C4Dynamic", "C4Deployment",
       "journey", "xychart-beta", "sankey-beta", "block-beta", "packet-beta", "architecture-beta", "kanban",
     ];
-
-    const escaped = lineStartKeywords.map((k) => k.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&"));
-    const startRegex = new RegExp(`(^|\\n)\\s*(${escaped.join("|")})\\b`, "i");
+    const escaped = lineStartKeywords.map((k) => k.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"));
+    const startRegex = new RegExp(`(^|\n)\s*(${escaped.join("|")})\b`, "i");
     const start = text.search(startRegex);
-
     if (start >= 0) {
       const candidate = text.slice(start).trim()
         .replace(/^```[\w-]*\s*/i, "")
@@ -571,7 +607,7 @@ export function parseDiagramResponse(text: string): DiagramResponse {
     }
   }
 
-  // Normalize Mermaid output for all supported diagram formats.
+  // Normalize Mermaid output for all supported diagram formats
   if (sections.code) {
     const detected = detectDiagramType(sections.code);
     if (detected && detected !== "chartjs") {
@@ -579,14 +615,23 @@ export function parseDiagramResponse(text: string): DiagramResponse {
     }
   }
 
+  // Improved explanation extraction for Mode 3:
+  // If a code block exists, treat all text before the first code block as explanation
+  if (sections.code) {
+    const codeBlockRegex = /```(?:mermaid|chartjs)[\s\S]*?```/i;
+    const codeBlockIndex = text.search(codeBlockRegex);
+    if (codeBlockIndex > 0) {
+      sections.explanation = text.slice(0, codeBlockIndex).trim();
+    }
+  }
+
   // Handle conversational responses (no diagram structure)
-  // If there's no explanation match and no code, treat the entire text as the explanation
   if (!sections.explanation && !sections.code) {
     sections.explanation = text.trim();
   }
 
   // Extract enhancement suggestions
-  const suggestionsMatch = text.match(/\*\*Enhancement Suggestions:\*\*\s*([\s\S]*?)$/i);
+  const suggestionsMatch = text.match(/Suggestions:\s*([\s\S]*?)$/i);
   if (suggestionsMatch) {
     const suggestionText = suggestionsMatch[1].trim();
     sections.suggestions = suggestionText
