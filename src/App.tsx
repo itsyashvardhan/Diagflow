@@ -40,12 +40,12 @@ const App = () => (
             <Route
               path="/"
               element={
-                <>
+                <div className="lg:h-screen lg:overflow-hidden lg:flex lg:flex-col">
                   <LandingNavbar />
                   <Suspense fallback={null}>
                     <LandingPage />
                   </Suspense>
-                </>
+                </div>
               }
             />
             <Route path="/pricing" element={<PricingPage />} />
