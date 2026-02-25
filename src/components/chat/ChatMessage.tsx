@@ -110,22 +110,21 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
     >
       <div className={`max-w-[90%] sm:max-w-[85%] ${isUser ? "items-end" : "items-start"} flex flex-col`}>
         {hasContent && (
-          <div
-            className={`
-              px-3 py-2 sm:px-4 sm:py-3 rounded-2xl
-              transition-all duration-200
-              ${isUser
-                ? "bg-[#3478F6] text-white rounded-br-md shadow-sm"
-                : "bg-white/[0.08] backdrop-blur-sm border border-white/[0.06] rounded-bl-md"
-              }
-              ${isQueued ? "opacity-70" : ""}
-            `}
-          >
-            {isUser ? (
+          isUser ? (
+            <div
+              className={`
+                px-3 py-2 sm:px-4 sm:py-3 rounded-2xl
+                transition-all duration-200
+                bg-[#3478F6] text-white rounded-br-md shadow-sm
+                ${isQueued ? "opacity-70" : ""}
+              `}
+            >
               <p className="text-[13px] sm:text-[15px] leading-relaxed whitespace-pre-wrap font-normal">
                 {message.content}
               </p>
-            ) : (
+            </div>
+          ) : (
+            <div className={`py-1 ${isQueued ? "opacity-70" : ""}`}>
               <div className="prose prose-sm prose-invert max-w-none 
                   prose-p:my-1.5 prose-p:leading-relaxed
                   prose-ul:my-2 prose-ol:my-2 
@@ -139,8 +138,8 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
               >
                 <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
-            )}
-          </div>
+            </div>
+          )
         )}
 
         {message.attachments && message.attachments.length > 0 && (

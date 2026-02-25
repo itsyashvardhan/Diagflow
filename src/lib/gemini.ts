@@ -4,7 +4,15 @@ import { Message, DiagramResponse, AppSettings, RetryCallback } from "@/types/di
 import { sanitizeDiagram, detectDiagramType } from "./diagramSanitizer";
 
 // Default system prompt for Gemini
-const SYSTEM_PROMPT = `You are Diagflo, an expert system diagram assistant. Generate clear, accurate diagrams in Mermaid or Chart.js DSL as requested. Always explain your reasoning and suggest enhancements if possible.`;
+const SYSTEM_PROMPT = `You are Diagflo, an expert system diagram assistant. Generate clear, accurate diagrams in Mermaid or Chart.js DSL as requested. Always explain your reasoning and suggest enhancements if possible.
+
+When the user asks to compare, diff, or analyze differences between diagrams:
+- If multiple diagrams are provided in the conversation history, compare them side by side.
+- Highlight structural differences, added/removed nodes, changed connections, and flow changes.
+- If only one diagram is visible but the user references "both" or "two", ask the user to provide the second diagram.
+- Never assume there is only one diagram when the user explicitly mentions comparing two.
+
+When the user provides diagram context, treat it as the current working diagram. Previous diagrams in the chat history are also valid references for comparison.`;
 
 // Custom error for rate limiting
 class RateLimitError extends Error {
@@ -293,6 +301,223 @@ export async function generateDiagram(
   }
 
   // All retries exhausted
+  throw lastError || new Error("Failed to generate diagram after multiple attempts");
+}
+
+// --- Streaming variant ---
+// Builds the same request body but uses streamGenerateContent and yields text deltas.
+export async function generateDiagramStream(
+  apiKey: string,
+  model: AppSettings["geminiModel"],
+  userPrompt: string,
+  currentDiagram: string,
+  chatHistory: Message[],
+  onChunk: (textDelta: string, accumulatedText: string) => void,
+  onRetry?: RetryCallback
+): Promise<DiagramResponse> {
+  if (!apiKey) {
+    throw new Error("API key is required");
+  }
+
+  const apiURL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`;
+
+  await enforceRequestInterval();
+
+  // Build contents array (same logic as generateDiagram)
+  const trimmedHistory = chatHistory.slice(-10);
+  const contents: GeminiContent[] = trimmedHistory
+    .map((message, index) => {
+      const parts: GeminiPart[] = [];
+      const isLatest = index === trimmedHistory.length - 1;
+      const cleanedContent = message.content?.trim();
+
+      if (cleanedContent) {
+        let textContent = cleanedContent;
+        if (message.role === "user" && isLatest && currentDiagram) {
+          textContent = `Current diagram context (Mermaid v11.12.0):\n\`\`\`mermaid\n${currentDiagram}\n\`\`\`\n\nUser request:\n${cleanedContent}`;
+        }
+        parts.push({ text: textContent });
+      } else if (message.role === "user" && isLatest && currentDiagram) {
+        parts.push({
+          text: `Current diagram context (Mermaid v11.12.0):\n\`\`\`mermaid\n${currentDiagram}\n\`\`\``,
+        });
+      }
+
+      if (GEMINI_SUPPORTS_IMAGE_INPUT && message.attachments) {
+        message.attachments.forEach((attachment) => {
+          if (attachment.base64) {
+            parts.push({
+              inlineData: {
+                data: attachment.base64,
+                mimeType: attachment.mimeType,
+              },
+            });
+            parts.push({
+              text: `The user provided an image attachment (${attachment.name}). Extract any architectural or workflow insights relevant to the request from this image.`,
+            });
+          }
+        });
+      }
+
+      if (
+        message.role === "user" &&
+        isLatest &&
+        (!cleanedContent || cleanedContent.length === 0) &&
+        GEMINI_SUPPORTS_IMAGE_INPUT &&
+        message.attachments &&
+        message.attachments.length > 0
+      ) {
+        parts.push({
+          text: "Analyze the attached image(s) and generate or update the diagram accordingly.",
+        });
+      }
+
+      if (parts.length === 0) return null;
+
+      return {
+        role: message.role === "assistant" ? "model" : "user",
+        parts,
+      } satisfies GeminiContent;
+    })
+    .filter((entry): entry is GeminiContent => entry !== null);
+
+  if (contents.length === 0) {
+    const fallbackParts: GeminiPart[] = [];
+    if (currentDiagram) {
+      fallbackParts.push({
+        text: `Current diagram context (Mermaid v11.12.0):\n\`\`\`mermaid\n${currentDiagram}\n\`\`\``,
+      });
+    }
+    const sanitizedPrompt = userPrompt.trim().length > 0 ? userPrompt.trim() : "Analyze the provided image(s) and generate the appropriate Mermaid diagram.";
+    fallbackParts.push({ text: sanitizedPrompt });
+    contents.push({ role: "user", parts: fallbackParts });
+  }
+
+  const requestBody = JSON.stringify({
+    systemInstruction: {
+      parts: [{ text: SYSTEM_PROMPT }],
+    },
+    contents,
+    generationConfig: {
+      temperature: 0.5,
+      maxOutputTokens: 4096,
+    },
+  });
+
+  // Retry loop
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= RATE_LIMIT_CONFIG.maxRetries; attempt++) {
+    try {
+      const response = await fetch(`${apiURL}?key=${apiKey}&alt=sse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: requestBody,
+      });
+
+      if (response.status === 429) {
+        const retryAfterHeader = response.headers.get("Retry-After");
+        const retryAfterMs = parseRetryAfter(retryAfterHeader);
+        if (attempt < RATE_LIMIT_CONFIG.maxRetries) {
+          const backoffDelay = Math.max(retryAfterMs, calculateBackoffDelay(attempt));
+          onRetry?.({
+            attempt: attempt + 1,
+            maxRetries: RATE_LIMIT_CONFIG.maxRetries,
+            estimatedWaitSeconds: Math.ceil(backoffDelay / 1000),
+            reason: "High demand, retrying...",
+          });
+          await sleep(backoffDelay);
+          continue;
+        }
+        throw new RateLimitError(
+          `Rate limit exceeded. Please wait before trying again.`,
+          retryAfterMs
+        );
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const errorMessage = extractErrorMessage(errorBody);
+        if (response.status >= 500 && attempt < RATE_LIMIT_CONFIG.maxRetries) {
+          const backoffDelay = calculateBackoffDelay(attempt);
+          onRetry?.({
+            attempt: attempt + 1,
+            maxRetries: RATE_LIMIT_CONFIG.maxRetries,
+            estimatedWaitSeconds: Math.ceil(backoffDelay / 1000),
+            reason: "Server busy, retrying...",
+          });
+          await sleep(backoffDelay);
+          continue;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Process the SSE stream
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body for streaming");
+
+      const decoder = new TextDecoder();
+      let accumulated = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process SSE events line by line
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith("data: ")) continue;
+
+          const jsonStr = trimmed.slice(6); // Remove "data: " prefix
+          if (jsonStr === "[DONE]") continue;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const textDelta = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (textDelta) {
+              accumulated += textDelta;
+              onChunk(textDelta, accumulated);
+            }
+          } catch {
+            // Skip malformed JSON chunks
+          }
+        }
+      }
+
+      if (!accumulated) {
+        throw new Error("No response from Gemini API stream");
+      }
+
+      return parseDiagramResponse(accumulated);
+
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      if (error instanceof RateLimitError ||
+        (error instanceof Error && !error.message.includes("fetch"))) {
+        throw error;
+      }
+
+      if (attempt < RATE_LIMIT_CONFIG.maxRetries) {
+        const backoffDelay = calculateBackoffDelay(attempt);
+        onRetry?.({
+          attempt: attempt + 1,
+          maxRetries: RATE_LIMIT_CONFIG.maxRetries,
+          estimatedWaitSeconds: Math.ceil(backoffDelay / 1000),
+          reason: "Connection issue, retrying...",
+        });
+        await sleep(backoffDelay);
+        continue;
+      }
+    }
+  }
+
   throw lastError || new Error("Failed to generate diagram after multiple attempts");
 }
 

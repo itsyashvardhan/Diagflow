@@ -625,7 +625,7 @@ const LandingPage = () => {
                 <Link to="/privacy" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>Privacy</Link>
                 <Link to="/terms" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>Terms</Link>
                 <a href="https://github.com/itsyashvardhan/diagflo" target="_blank" rel="noopener noreferrer" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>GitHub</a>
-                <a href="https://www.linkedin.com/in/itsyashvardhan" target="_blank" rel="noopener noreferrer" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>LinkedIn</a>
+                <a href="https://www.linkedin.com/company/diagflo" target="_blank" rel="noopener noreferrer" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>LinkedIn</a>
               </div>
               <p className={isDark ? "text-white/55 text-sm" : "text-black/55 text-sm"}>
                 © {new Date().getFullYear()} Diagflo
@@ -897,7 +897,7 @@ const LandingPage = () => {
                     <Link to="/privacy" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>Privacy</Link>
                     <Link to="/terms" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>Terms</Link>
                     <a href="https://github.com/itsyashvardhan/diagflo" target="_blank" rel="noopener noreferrer" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>GitHub</a>
-                    <a href="https://www.linkedin.com/in/itsyashvardhan" target="_blank" rel="noopener noreferrer" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>LinkedIn</a>
+                    <a href="https://www.linkedin.com/company/diagflo" target="_blank" rel="noopener noreferrer" className={isDark ? "text-white/65 hover:text-white" : "text-black/65 hover:text-black"}>LinkedIn</a>
                   </div>
                   <p className={isDark ? "text-white/55 text-sm" : "text-black/55 text-sm"}>
                     © {new Date().getFullYear()} Diagflo

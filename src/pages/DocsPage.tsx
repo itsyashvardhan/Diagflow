@@ -19,6 +19,10 @@ import {
   ArrowLeft,
   Menu,
   X,
+  Sun,
+  Moon,
+  ShieldCheck,
+  ArrowRight,
 } from "lucide-react";
 
 type DocSection = {
@@ -227,13 +231,12 @@ const DocsPage = () => {
         <span className={`text-[11px] font-mono uppercase tracking-wider ${isDark ? "text-white/30" : "text-gray-400"}`}>{language}</span>
         <button
           onClick={() => copyToClipboard(code, id)}
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
-            copyFailedId === id
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-all ${copyFailedId === id
               ? "text-red-500"
               : isDark
                 ? "hover:bg-white/10 text-white/50 hover:text-white"
                 : "hover:bg-gray-200 text-gray-400 hover:text-gray-700"
-          }`}
+            }`}
           aria-label="Copy code"
         >
           {copiedId === id ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
@@ -284,9 +287,9 @@ const DocsPage = () => {
               aria-label="Toggle theme"
             >
               {isDark ? (
-                <span className="material-symbols-outlined text-[18px]">light_mode</span>
+                <Sun className="w-[18px] h-[18px]" />
               ) : (
-                <span className="material-symbols-outlined text-[18px]">dark_mode</span>
+                <Moon className="w-[18px] h-[18px]" />
               )}
             </button>
             <Link
@@ -317,15 +320,14 @@ const DocsPage = () => {
                 <a
                   key={item.id}
                   href={`#${item.id}`}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
-                    isActive
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${isActive
                       ? isDark
                         ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
                         : "bg-orange-50 text-orange-600 border border-orange-200"
                       : isDark
                         ? "text-white/40 hover:text-white/70 hover:bg-white/5"
                         : "text-black/40 hover:text-black/70 hover:bg-black/5"
-                  }`}
+                    }`}
                   aria-current={isActive ? "location" : undefined}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -341,11 +343,10 @@ const DocsPage = () => {
           {/* Floating TOC button */}
           <button
             onClick={() => setMobileTocOpen(!mobileTocOpen)}
-            className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg font-medium text-sm transition-all ${
-              isDark
+            className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg font-medium text-sm transition-all ${isDark
                 ? "bg-orange-500 text-white shadow-orange-500/25"
                 : "bg-orange-500 text-white shadow-orange-500/30"
-            }`}
+              }`}
             aria-label="Toggle table of contents"
             aria-expanded={mobileTocOpen}
           >
@@ -364,9 +365,8 @@ const DocsPage = () => {
 
           {/* Slide-up panel */}
           <div
-            className={`fixed bottom-0 left-0 right-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t transition-transform duration-300 ${
-              mobileTocOpen ? "translate-y-0" : "translate-y-full"
-            } ${isDark ? "bg-[#0a0a0a] border-white/10" : "bg-[#fafafa] border-gray-200"}`}
+            className={`fixed bottom-0 left-0 right-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t transition-transform duration-300 ${mobileTocOpen ? "translate-y-0" : "translate-y-full"
+              } ${isDark ? "bg-[#0a0a0a] border-white/10" : "bg-[#fafafa] border-gray-200"}`}
           >
             <div className="px-6 py-5">
               <div className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? "text-white/30" : "text-black/30"}`}>
@@ -381,15 +381,14 @@ const DocsPage = () => {
                       key={item.id}
                       href={`#${item.id}`}
                       onClick={() => setMobileTocOpen(false)}
-                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[14px] font-medium transition-all ${
-                        isActive
+                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[14px] font-medium transition-all ${isActive
                           ? isDark
                             ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
                             : "bg-orange-50 text-orange-600 border border-orange-200"
                           : isDark
                             ? "text-white/50 hover:text-white/70 hover:bg-white/5"
                             : "text-black/50 hover:text-black/70 hover:bg-black/5"
-                      }`}
+                        }`}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
                       {item.title}
@@ -454,7 +453,7 @@ const DocsPage = () => {
               </ol>
             </div>
             <div className={`flex items-start gap-3 rounded-xl border p-4 ${isDark ? "bg-green-500/5 border-green-500/20" : "bg-green-50 border-green-200"}`}>
-              <span className="material-symbols-outlined text-green-500 text-lg mt-0.5">verified_user</span>
+              <ShieldCheck className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
               <p className={`text-[15px] leading-relaxed ${isDark ? "text-green-400/80" : "text-green-700"}`}>
                 <strong>Your key stays local.</strong> It's stored only in your browser's localStorage and sent directly to Google's API. Diagflo never sees or stores your key on any server.
               </p>
@@ -689,7 +688,7 @@ Archie: [adds error handling branches]`}
                   key={`${item.title}-${index}`}
                   className={`flex items-start gap-4 p-4 rounded-xl border ${isDark ? "bg-white/[0.02] border-white/5" : "bg-gray-50 border-gray-200"}`}
                 >
-                  <span className="material-symbols-outlined text-green-500 text-lg mt-0.5 shrink-0">shield</span>
+                  <ShieldCheck className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                   <div>
                     <h3 className={`text-base font-semibold mb-1 ${isDark ? "text-white" : "text-black"}`}>{item.title}</h3>
                     <p className={`text-sm leading-relaxed ${isDark ? "text-white/50" : "text-black/50"}`}>{item.desc}</p>
@@ -712,7 +711,7 @@ Archie: [adds error handling branches]`}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:opacity-90 transition-all shadow-lg shadow-orange-500/25"
             >
               Open Diagflo
-              <span className="material-symbols-outlined text-base">arrow_forward</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </main>

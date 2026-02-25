@@ -15,7 +15,7 @@ import { HelpModal } from "@/components/modals/HelpModal";
 import { ShareModal } from "@/components/modals/ShareModal";
 import { storage } from "@/lib/storage";
 import { getSharedDiagram } from "@/lib/shareLinks";
-import { generateDiagram } from "@/lib/gemini";
+import { generateDiagramStream } from "@/lib/gemini";
 import { Message, DiagramHistoryEntry, AppSettings, Attachment } from "@/types/diagflo";
 import { GEMINI_SUPPORTS_IMAGE_INPUT } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
@@ -408,12 +408,35 @@ const Index = () => {
         return;
       }
 
-      const response = await generateDiagram(
+      // Create a placeholder assistant message for streaming
+      const streamingAssistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        timestamp: Date.now(),
+      };
+      const assistantMessageIndex = updatedHistory.length;
+      setMessages(prev => [...prev, streamingAssistantMessage]);
+
+      const response = await generateDiagramStream(
         settings.geminiApiKey,
         settings.geminiModel,
         content,
         currentDiagram,
         updatedHistory,
+        (_delta, accumulated) => {
+          if (!isCurrentRequest()) return;
+          // Update the assistant message content incrementally
+          setMessages(prev => {
+            const newMessages = [...prev];
+            if (newMessages[assistantMessageIndex]) {
+              newMessages[assistantMessageIndex] = {
+                ...newMessages[assistantMessageIndex],
+                content: accumulated,
+              };
+            }
+            return newMessages;
+          });
+        },
         handleRetry
       );
 
@@ -431,7 +454,6 @@ const Index = () => {
         let validation = await validateMermaidSyntax(healed);
 
         if (!validation.valid) {
-          // Keep only the diagram section if model leaked explanation text into code.
           const declarationIndex = healed.search(/^\s*(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram-v2|stateDiagram|erDiagram|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|requirementDiagram|C4Context|C4Container|C4Component|C4Dynamic|C4Deployment|journey|xychart-beta|sankey-beta|block-beta|packet-beta|architecture-beta|kanban)\b/m);
           if (declarationIndex > 0) {
             healed = sanitizeDiagram(healed.slice(declarationIndex)).code;
@@ -459,6 +481,7 @@ const Index = () => {
         }
       }
 
+      // Finalize assistant message with cleaned explanation + suggestions
       const assistantMessage: Message = {
         role: "assistant",
         content: `${response.explanation}\n\n${response.suggestions.length > 0
@@ -468,7 +491,7 @@ const Index = () => {
         timestamp: Date.now(),
       };
 
-      // Mark user message as sent and build final history
+      // Mark user message as sent and update assistant message in-place (streaming already added it)
       const sentUserMessage: Message = {
         ...userMessage,
         status: "sent",
@@ -476,12 +499,16 @@ const Index = () => {
         estimatedWaitSeconds: undefined,
       };
 
-      const finalHistory = [...updatedHistory];
-      if (finalHistory[userMessageIndex]) {
-        finalHistory[userMessageIndex] = sentUserMessage;
-      }
-      finalHistory.push(assistantMessage);
-      setMessages(finalHistory);
+      setMessages(prev => {
+        const finalHistory = [...prev];
+        if (finalHistory[userMessageIndex]) {
+          finalHistory[userMessageIndex] = sentUserMessage;
+        }
+        if (finalHistory[assistantMessageIndex]) {
+          finalHistory[assistantMessageIndex] = assistantMessage;
+        }
+        return finalHistory;
+      });
       setCurrentDiagram(nextDiagramCode);
 
       // Add to history
@@ -499,7 +526,11 @@ const Index = () => {
       }
 
       storage.saveCurrentDiagram(nextDiagramCode);
-      storage.saveChatHistory(finalHistory);
+      // Save chat history from current state
+      setMessages(prev => {
+        storage.saveChatHistory(prev);
+        return prev;
+      });
 
       toast({
         title: "Diagram Generated",
@@ -806,7 +837,7 @@ const Index = () => {
             >
               <div className="px-4 sm:px-5 py-3 border-b border-white/10 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/70">Conversation</p>
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/85">Conversation</p>
                   <p className="text-sm font-medium text-foreground/90">Build and refine your diagram</p>
                 </div>
                 <Button
@@ -825,7 +856,7 @@ const Index = () => {
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center space-y-4 max-w-sm animate-slide-up">
                       <h2 className="text-2xl font-bold tracking-tight text-foreground/95 leading-tight">Flow your thoughts</h2>
-                      <p className="text-sm text-muted-foreground/65 max-w-xs mx-auto">
+                      <p className="text-sm text-muted-foreground/80 max-w-xs mx-auto">
                         Visualize systems with production-grade structure and clarity.
                       </p>
                       <StarterPrompts onSelect={(prompt) => handleSendMessage(prompt)} />
@@ -850,6 +881,18 @@ const Index = () => {
                   hasApiKey={Boolean(settings.geminiApiKey)}
                   disabled={isGenerating}
                 />
+              </div>
+
+              {/* Built-with badge for recruiter-friendly tech validation */}
+              <div className="px-4 sm:px-5 py-1.5 border-t border-white/5 flex items-center justify-center">
+                <a
+                  href="https://github.com/itsyashvardhan/Diagflow"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-muted-foreground/50 hover:text-muted-foreground/80 transition-colors"
+                >
+                  Built with React · Gemini · Mermaid · Vite
+                </a>
               </div>
             </section>
 

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { DiagfloLogo } from "@/components/logo/DiagfloLogo";
-import { Sparkles, Zap, Building2, Crown, Lock } from "lucide-react";
+import { Sparkles, Zap, Building2, Crown, Lock, Sun, Moon, ArrowRight, CheckCircle } from "lucide-react";
 import { useCanonical } from "@/hooks/use-canonical";
 
 const PricingPage = () => {
@@ -92,9 +92,9 @@ const PricingPage = () => {
                             aria-label="Toggle theme"
                         >
                             {isDark ? (
-                                <span className="material-symbols-outlined text-[18px]">light_mode</span>
+                                <Sun className="w-[18px] h-[18px]" />
                             ) : (
-                                <span className="material-symbols-outlined text-[18px]">dark_mode</span>
+                                <Moon className="w-[18px] h-[18px]" />
                             )}
                         </button>
                         <Link
@@ -216,7 +216,7 @@ const PricingPage = () => {
                         className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:opacity-90 transition-all shadow-lg shadow-orange-500/25"
                     >
                         Open Diagflo
-                        <span className="material-symbols-outlined text-base">arrow_forward</span>
+                        <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
 
@@ -257,7 +257,7 @@ const PricingPage = () => {
                     ) : (
                         <div className={`p-4 rounded-xl border ${isDark ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-green-50 border-green-200 text-green-600'}`}>
                             <p className="text-sm font-medium flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined text-base">check_circle</span>
+                                <CheckCircle className="w-4 h-4" />
                                 You're on the list!
                             </p>
                         </div>
