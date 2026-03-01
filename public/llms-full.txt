@@ -3,7 +3,7 @@
 > The fastest way to visualize complex systems. Describe your architecture in any language, and let Archie handle the structure.
 
 Website: https://diagflo.yashvardhan.dev
-Repository: https://github.com/PythonicBoat/Diagflow
+Repository: https://github.com/PythonicBoat/Diagflo
 
 ---
 

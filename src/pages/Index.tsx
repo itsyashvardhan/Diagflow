@@ -915,7 +915,7 @@ const Index = () => {
               {/* Built-with badge for recruiter-friendly tech validation */}
               <div className="px-4 sm:px-5 py-1.5 border-t border-white/5 flex items-center justify-center">
                 <a
-                  href="https://github.com/itsyashvardhan/Diagflow"
+                  href="https://github.com/itsyashvardhan/Diagflo"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[10px] text-muted-foreground/50 hover:text-muted-foreground/80 transition-colors"
